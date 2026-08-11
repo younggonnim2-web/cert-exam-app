@@ -30,3 +30,6 @@ venv/
 
 # Logs
 *.log
+
+# Git worktrees (isolated implementation workspaces)
+.worktrees/
