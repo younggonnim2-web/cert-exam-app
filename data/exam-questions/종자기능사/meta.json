@@ -1,0 +1,7 @@
+{
+  "certName": "종자기능사",
+  "totalQuestions": 60,
+  "timeLimitMinutes": 60,
+  "passingScore": 60,
+  "subjects": ["종자(임의구분)", "작물육종(임의구분)", "작물(임의구분)"]
+}
