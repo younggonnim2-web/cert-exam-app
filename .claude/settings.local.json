@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api *)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(f'=== {k} ===\\\\n{v[\\\\\"content\\\\\"]}'\\) for k,v in data['files'].items\\(\\)]\")",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:gist.githubusercontent.com)",
+      "Bash(curl -s \"https://api.github.com/gists/f46d5479a5b663c282c94faa8be866de\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl *)",
+      "WebFetch(domain:garnet-soup-500.notion.site)",
+      "Read(//Users/younggonmin/.claude/rules/**)"
+    ]
+  }
+}

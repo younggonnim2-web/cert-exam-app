@@ -1,0 +1,32 @@
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Claude / G-Stack runtime
+.gstack/
+.claude/.local/
+.claude/logs/
+
+# Logs
+*.log

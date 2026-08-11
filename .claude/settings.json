@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(bun:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(rg:*)",
+      "Read(*)",
+      "Write(docs/**)",
+      "Write(src/**)",
+      "Write(tests/**)",
+      "Edit(docs/**)",
+      "Edit(src/**)",
+      "Edit(tests/**)"
+    ],
+    "deny": [
+      "Write(.env)",
+      "Write(.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(git push --force*)"
+    ]
+  },
+  "env": {
+    "PROJECT_TEMPLATE_VERSION": "1.0.0"
+  }
+}

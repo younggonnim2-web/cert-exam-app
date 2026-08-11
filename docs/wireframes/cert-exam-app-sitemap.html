@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>자격증 기출문제 풀이 웹앱 — 사이트맵</title>
+<style>
+  :root {
+    --entry: #B45309;
+    --neutral: #374151;
+    --bg: #F9FAFB;
+    --accent: #1D4ED8;
+    --danger: #DC2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--neutral); padding: 24px;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6B7280; margin-bottom: 24px; }
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #9CA3AF; margin: 32px 0 12px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+
+  .screen-card { transition: opacity 0.2s, transform 0.2s; cursor: pointer; width: 172px; }
+  .screen-card.source .phone { outline: 3px solid #F59E0B; border-radius: 26px; }
+  .screen-card.highlighted .phone { outline: 3px solid #10B981; border-radius: 26px; }
+  .screen-card.highlighted { transform: scale(1.03); }
+  .screen-card.dimmed { opacity: 0.3; }
+
+  .phone {
+    width: 172px; height: 340px; background: #fff; border-radius: 22px;
+    border: 1px solid #E5E7EB; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .phone-top { height: 8px; background: #F3F4F6; flex-shrink: 0; }
+  .screen-states { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .state-tabs { display: flex; background: #F3F4F6; border-bottom: 1px solid #E5E7EB; flex-shrink: 0; }
+  .state-tab { flex: 1; font-size: 7px; padding: 4px 0; border: none; background: none; cursor: pointer; color: #9CA3AF; font-weight: 600; }
+  .state-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #fff; }
+  .state-content { display: none; flex: 1; padding: 8px; overflow: hidden; }
+  .state-content.active { display: flex; flex-direction: column; gap: 6px; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .skeleton { background: #E5E7EB; border-radius: 4px; animation: pulse 1.5s infinite; }
+
+  .screen-label { font-size: 13px; font-weight: 600; margin-top: 8px; text-align: center; }
+  .screen-path { font-size: 10px; color: #9CA3AF; text-align: center; font-family: monospace; }
+
+  .wf-header { font-size: 9px; font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; }
+  .wf-card { border: 1px solid #E5E7EB; border-radius: 6px; padding: 6px; font-size: 8px; }
+  .wf-card.highlight { border-color: var(--danger); border-width: 2px; }
+  .wf-btn { display: block; text-align: center; border-radius: 6px; padding: 6px; font-size: 8px; font-weight: 600; }
+  .wf-btn.primary { background: var(--accent); color: #fff; }
+  .wf-btn.danger { background: var(--danger); color: #fff; }
+  .wf-btn.gray { background: #F3F4F6; color: var(--neutral); }
+  .wf-btn.outline { border: 2px solid var(--danger); color: var(--danger); font-weight: 700; }
+  .wf-badge { display: inline-block; font-size: 7px; padding: 1px 5px; border-radius: 8px; }
+  .wf-badge.green { background: #D1FAE5; color: #047857; }
+  .wf-badge.red { background: #FEE2E2; color: #B91C1C; }
+  .wf-badge.gray { background: #F3F4F6; color: #6B7280; }
+  .wf-tabbar { display: flex; gap: 3px; }
+  .wf-tab { flex: 1; text-align: center; font-size: 6.5px; padding: 3px 0; border-radius: 4px; background: #F3F4F6; }
+  .wf-tab.active { background: var(--accent); color: #fff; }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+  .empty-icon { width: 32px; height: 32px; border-radius: 8px; background: #F3F4F6; }
+  .empty-text { font-size: 8px; color: #6B7280; }
+  .error-icon { width: 32px; height: 32px; border-radius: 8px; background: #FEE2E2; }
+  .error-text { font-size: 8px; color: var(--danger); }
+  .omr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+  .omr-cell { border: 1px solid #E5E7EB; border-radius: 4px; padding: 2px; text-align: center; font-size: 6px; }
+  .omr-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; margin-top: 2px; }
+  .omr-choice { border: 1px solid #D1D5DB; border-radius: 50%; font-size: 5px; width: 10px; height: 10px; line-height: 10px; margin: 0 auto; }
+  .omr-choice.picked { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .timer-tense { background: #FEE2E2; color: var(--danger); font-weight: 700; font-size: 10px; padding: 3px 6px; border-radius: 4px; text-align: center; }
+
+  .flow-box {
+    background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px 20px;
+    max-width: 720px; font-size: 13px; line-height: 1.7;
+  }
+  .flow-box ol { margin: 8px 0 0; padding-left: 20px; }
+  pre {
+    background: #111827; color: #E5E7EB; padding: 16px; border-radius: 8px;
+    font-size: 12px; overflow-x: auto; max-width: 720px;
+  }
+</style>
+</head>
+<body>
+
+<h1>자격증 기출문제 풀이 웹앱 — 사이트맵</h1>
+<div class="subtitle">기반 플랜: docs/plans/cert-exam-app.md · 화면 클릭 시 연결된 화면이 강조됩니다. 각 폰 상단 탭으로 Default/Loading/Empty/Error 상태를 확인하세요.</div>
+
+<div class="section-title">화면 흐름</div>
+<div class="row">
+
+  <!-- 1. 자격증 선택 -->
+  <div>
+    <div class="screen-card" data-id="cert-select" data-connects-to="round-select">
+      <div class="phone">
+        <div class="phone-top"></div>
+        <div class="screen-states">
+          <div class="state-tabs">
+            <button class="state-tab active" data-state="default">Default</button>
+            <button class="state-tab" data-state="loading">Loading</button>
+            <button class="state-tab" data-state="empty">Empty</button>
+          </div>
+          <div class="screen state-content active" data-state="default">
+            <div class="wf-header">자격증 선택</div>
+            <div class="wf-card">유기농업기능사</div>
+            <div class="wf-card">종자기능사</div>
+          </div>
+          <div class="screen state-content" data-state="loading">
+            <div class="wf-header">자격증 선택</div>
+            <div class="skeleton" style="height:24px;"></div>
+            <div class="skeleton" style="height:24px;"></div>
+          </div>
+          <div class="screen state-content" data-state="empty">
+            <div class="empty-state">
+              <div class="empty-icon"></div>
+              <div class="empty-text">등록된 자격증이 없습니다<br>data/exam-questions/ 확인 필요</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">자격증 선택</div>
+    <div class="screen-path">app/page.tsx</div>
+  </div>
+
+  <!-- 2. 회차 선택 -->
+  <div>
+    <div class="screen-card" data-id="round-select" data-connects-to="mode-select">
+      <div class="phone">
+        <div class="phone-top"></div>
+        <div class="screen-states">
+          <div class="state-tabs">
+            <button class="state-tab active" data-state="default">Default</button>
+            <button class="state-tab" data-state="loading">Loading</button>
+            <button class="state-tab" data-state="empty">Empty</button>
+          </div>
+          <div class="screen state-content active" data-state="default">
+            <div class="wf-header">유기농업기능사 — 회차 선택</div>
+            <div class="wf-card">2016-07-10 시행</div>
+            <div class="wf-card">2016-04-02 시행</div>
+            <div class="wf-card">2016-01-24 시행</div>
+          </div>
+          <div class="screen state-content" data-state="loading">
+            <div class="wf-header">회차 선택</div>
+            <div class="skeleton" style="height:20px;"></div>
+            <div class="skeleton" style="height:20px;"></div>
+            <div class="skeleton" style="height:20px;"></div>
+          </div>
+          <div class="screen state-content" data-state="empty">
+            <div class="empty-state">
+              <div class="empty-icon"></div>
+              <div class="empty-text">아직 파싱된 회차가 없습니다<br>questions.json 생성 필요</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">회차 선택</div>
+    <div class="screen-path">app/[cert]/page.tsx</div>
+  </div>
+
+  <!-- 3. 모드 선택 -->
+  <div>
+    <div class="screen-card" data-id="mode-select" data-connects-to="exam-mode,practice-mode">
+      <div class="phone">
+        <div class="phone-top"></div>
+        <div class="screen-states">
+          <div class="screen state-content active" data-state="default" style="display:flex;">
+            <div class="wf-header">유기농업기능사 2016-07-10</div>
+            <div class="wf-btn outline">전체 모의고사<br><span style="font-weight:400;font-size:6.5px;">타이머 · 일괄채점</span></div>
+            <div class="wf-btn gray">과목별 연습<br><span style="font-weight:400;font-size:6.5px;">즉시 정오 확인</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">모드 선택</div>
+    <div class="screen-path">app/[cert]/[round]/page.tsx</div>
+  </div>
+
+</div>
+
+<div class="row" style="margin-top:20px;">
+
+  <!-- 4. 과목별연습 -->
+  <div>
+    <div class="screen-card" data-id="practice-mode" data-connects-to="">
+      <div class="phone">
+        <div class="phone-top"></div>
+        <div class="screen-states">
+          <div class="state-tabs">
+            <button class="state-tab active" data-state="default">Default</button>
+            <button class="state-tab" data-state="loading">Loading</button>
+            <button class="state-tab" data-state="empty">Empty</button>
+          </div>
+          <div class="screen state-content active" data-state="default">
+            <div class="wf-tabbar">
+              <div class="wf-tab active">작물재배</div>
+              <div class="wf-tab">토양관리</div>
+              <div class="wf-tab">유기농업일반</div>
+            </div>
+            <div class="wf-card">
+              1. 잎의 가장자리에 있는 수공에서...
+              <div style="margin-top:3px;">
+                <div class="wf-badge green">① 일액현상 ✓</div>
+              </div>
+              <div><span class="wf-badge red">② 일비현상 ✗</span></div>
+            </div>
+            <div class="wf-card">2. 작물이 받는 냉해의 종류가...</div>
+          </div>
+          <div class="screen state-content" data-state="loading">
+            <div class="wf-tabbar"><div class="wf-tab active">-</div></div>
+            <div class="skeleton" style="height:40px;"></div>
+            <div class="skeleton" style="height:40px;"></div>
+          </div>
+          <div class="screen state-content" data-state="empty">
+            <div class="empty-state">
+              <div class="empty-icon"></div>
+              <div class="empty-text">이 회차엔 문제 데이터가 없습니다</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">과목별 연습</div>
+    <div class="screen-path">app/[cert]/[round]/practice/page.tsx</div>
+  </div>
+
+  <!-- 5. 전체모의고사 -->
+  <div>
+    <div class="screen-card" data-id="exam-mode" data-connects-to="exam-result">
+      <div class="phone">
+        <div class="phone-top"></div>
+        <div class="screen-states">
+          <div class="state-tabs">
+            <button class="state-tab active" data-state="default">Default</button>
+            <button class="state-tab" data-state="loading">Loading</button>
+            <button class="state-tab" data-state="error">Error</button>
+          </div>
+          <div class="screen state-content active" data-state="default">
+            <div class="wf-header" style="display:flex;justify-content:space-between;align-items:center;">
+              전체 모의고사
+              <span class="timer-tense">09:42</span>
+            </div>
+            <!-- 문항 상세 패널: 지문 + 보기 (여기서 답 선택) -->
+            <div class="wf-card" style="font-size:7px;">
+              <div style="font-weight:700;margin-bottom:3px;">13. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?</div>
+              <div class="wf-card" style="border-color:#1D4ED8;background:#EFF6FF;margin-bottom:1px;">① 일액현상</div>
+              <div class="wf-card" style="margin-bottom:1px;">② 일비현상</div>
+              <div class="wf-card" style="margin-bottom:1px;">③ 증산작용</div>
+              <div class="wf-card">④ Apoplast</div>
+            </div>
+            <div class="wf-row" style="display:flex;justify-content:space-between;">
+              <span class="wf-btn gray" style="width:40px;">이전</span>
+              <span class="wf-btn gray" style="width:40px;">다음</span>
+            </div>
+            <!-- OMR 요약: 문항 번호 탭하면 위 상세 패널이 이동, 파란 배경 = 응답완료 -->
+            <div class="omr-grid">
+              <div class="omr-cell" style="background:#EFF6FF;">11</div>
+              <div class="omr-cell" style="background:#EFF6FF;">12</div>
+              <div class="omr-cell" style="border:2px solid #1D4ED8;font-weight:700;">13</div>
+              <div class="omr-cell">14</div>
+              <div class="omr-cell">15</div>
+              <div class="omr-cell">16</div>
+              <div class="omr-cell">17</div>
+              <div class="omr-cell">18</div>
+            </div>
+            <div class="wf-btn danger">제출하고 채점하기</div>
+          </div>
+          <div class="screen state-content" data-state="loading">
+            <div class="wf-header">전체 모의고사</div>
+            <div class="empty-state">
+              <div class="skeleton" style="width:60px;height:12px;"></div>
+              <div class="empty-text">문제를 불러오는 중...</div>
+            </div>
+          </div>
+          <div class="screen state-content" data-state="error">
+            <div class="empty-state">
+              <div class="error-icon"></div>
+              <div class="error-text">문제를 불러오지 못했습니다</div>
+              <div class="wf-btn gray" style="width:60px;">다시 시도</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">전체 모의고사</div>
+    <div class="screen-path">app/[cert]/[round]/exam/page.tsx</div>
+    <div style="font-size:10px;color:#6B7280;margin-top:6px;line-height:1.5;max-width:172px;">
+      <strong>수정됨:</strong> 상단은 현재 문항 지문+보기(파란 테두리=선택함), 하단 작은 번호 그리드는 <em>답 선택용이 아니라</em> 진행률+이동용 (파란 배경=응답완료, 굵은 테두리=현재 문항). 정답/오답 색은 제출 전까지 안 보임(일괄채점).
+    </div>
+  </div>
+
+  <!-- 6. 전체모의고사 결과 -->
+  <div>
+    <div class="screen-card" data-id="exam-result" data-connects-to="">
+      <div class="phone">
+        <div class="phone-top"></div>
+        <div class="screen-states">
+          <div class="screen state-content active" data-state="default" style="display:flex;">
+            <div class="wf-header">결과</div>
+            <div class="wf-card highlight" style="text-align:center;padding:14px 6px;">
+              <div style="font-size:16px;font-weight:700;">42 / 60</div>
+              <div style="font-size:9px;">70점</div>
+            </div>
+            <div class="wf-card">
+              오답 문항<br>
+              <span class="wf-badge red">3</span> <span class="wf-badge red">7</span> <span class="wf-badge red">15</span> ...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">모의고사 결과</div>
+    <div class="screen-path">exam/page.tsx (제출 후 상태)</div>
+  </div>
+
+</div>
+
+<div class="section-title">핵심 흐름 요약</div>
+<div class="flow-box">
+  <strong>기본 흐름</strong>
+  <ol>
+    <li>자격증 선택 → 회차 선택 (날짜 최신순) → 모드 선택</li>
+    <li><strong>전체 모의고사</strong>: 상단 문항 상세 패널(지문+보기)에서 답 선택, 이전/다음 버튼 또는 하단 OMR 요약 번호 탭으로 문항 이동 → 답안은 즉시 localStorage에 저장(새로고침/이탈해도 복원) → 잔여 10분부터 타이머가 붉게 긴장감 연출 → 제출 버튼 클릭 <em>또는</em> 타이머 00:00 도달 시 자동 제출 → 결과 화면(점수 + 오답 문항 번호). 정답 여부는 제출 전까지 어디에도 안 보임(일괄채점 원칙)</li>
+    <li><strong>과목별 연습</strong>: 과목 탭 전환 → 문항 클릭 시 정답이면 초록, 오답이면 빨강으로 즉시 표시 (별도 제출/결과 화면 없음)</li>
+  </ol>
+  <strong>엣지 케이스</strong>
+  <ol>
+    <li>회차 선택 화면에서 아직 <code>questions.json</code>이 생성되지 않은 회차는 Empty 상태로 처리 (스크립트 미실행 상황 대비)</li>
+    <li>전체모의고사는 클라이언트에서 <code>/api/questions</code>를 fetch하는 구조라 Loading/Error 상태가 실제로 발생 가능 — 과목별연습은 서버 컴포넌트에서 파일을 직접 읽어 이 상태가 사실상 발생하지 않음(참고용으로만 표시)</li>
+  </ol>
+</div>
+
+<div class="section-title">파일 구조</div>
+<pre>app/
+  page.tsx                          # 1. 자격증 선택
+  [cert]/page.tsx                    # 2. 회차 선택
+  [cert]/[round]/page.tsx             # 3. 모드 선택
+  [cert]/[round]/practice/page.tsx     # 4. 과목별 연습
+  [cert]/[round]/exam/page.tsx          # 5. 전체 모의고사 (+ 결과 상태)
+  api/questions/route.ts               # 전체모의고사용 questions.json + timeLimitMinutes 응답
+components/
+  QuestionDetail.tsx (문항 지문+보기, 답 선택), OmrGrid.tsx (내비게이션+진행률), ExamTimer.tsx, QuestionList.tsx
+lib/
+  parseExam.ts, examStorage.ts, grading.ts, getRounds.ts, examMeta.ts, types.ts</pre>
+
+<script>
+  document.querySelectorAll('.screen-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.screen-card').forEach(c => {
+        c.classList.remove('highlighted', 'source', 'dimmed');
+      });
+      const targets = (card.dataset.connectsTo || '').split(',').filter(Boolean);
+      if (targets.length === 0) return;
+      card.classList.add('source');
+      targets.forEach(id => {
+        const target = document.querySelector(`[data-id="${id.trim()}"]`);
+        if (target) target.classList.add('highlighted');
+      });
+      document.querySelectorAll('.screen-card:not(.source):not(.highlighted)').forEach(c => {
+        c.classList.add('dimmed');
+      });
+    });
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.screen-card')) {
+      document.querySelectorAll('.screen-card').forEach(c => {
+        c.classList.remove('highlighted', 'source', 'dimmed');
+      });
+    }
+  });
+  document.querySelectorAll('.state-tab').forEach(tab => {
+    tab.addEventListener('click', e => {
+      e.stopPropagation();
+      const card = tab.closest('.screen-card');
+      const state = tab.dataset.state;
+      card.querySelectorAll('.state-tab').forEach(t => t.classList.remove('active'));
+      card.querySelectorAll('.state-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      card.querySelector(`.state-content[data-state="${state}"]`).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
