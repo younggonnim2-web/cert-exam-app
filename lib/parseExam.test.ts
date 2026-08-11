@@ -68,4 +68,51 @@ describe('parseExam', () => {
       /문항 1.*정답 표시/
     )
   })
+
+  it('correctly parses the last choice (④) when its text is split across lines, without corrupting choice 3', () => {
+    const lastChoiceSplitSample = `--- page 1 ---
+1. 마지막 보기가 줄바꿈된 문제
+   ❶ 일액현상
+② 일비현상
+   ③ 증산작용
+④
+줄바뀐네번째보기
+1과목 : 작물재배
+`
+    const questions = parseExam(lastChoiceSplitSample, '유기농업기능사', '2099-01-02')
+    expect(questions).toHaveLength(1)
+    expect(questions[0].choices).toEqual([
+      '일액현상',
+      '일비현상',
+      '증산작용',
+      '줄바뀐네번째보기',
+    ])
+  })
+
+  it('throws when a choice ends up empty after parsing', () => {
+    const emptyChoiceSample = `--- page 1 ---
+1. 보기 하나가 비어있는 문제
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④
+1과목 : 작물재배
+`
+    expect(() => parseExam(emptyChoiceSample, '유기농업기능사', '2099-01-03')).toThrow(
+      /문항 1/
+    )
+  })
+
+  it('throws when the file has zero subject markers instead of silently assigning empty subjects', () => {
+    const noSubjectSample = `--- page 1 ---
+1. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?
+   ❶ 일액현상
+② 일비현상
+   ③ 증산작용
+④ Apoplast
+`
+    expect(() =>
+      parseExam(noSubjectSample, '유기농업기능사', '2099-01-04')
+    ).toThrow(/유기농업기능사\/2099-01-04/)
+  })
 })
