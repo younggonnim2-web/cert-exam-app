@@ -3,16 +3,40 @@ import type { Question } from './types'
 
 const BOLD_CIRCLED = ['❶', '❷', '❸', '❹']
 const PLAIN_CIRCLED = ['①', '②', '③', '④']
+const ALL_CIRCLED = [...BOLD_CIRCLED, ...PLAIN_CIRCLED]
 const NOISE_LINE_PATTERNS = [
   /^전자문제집 CBT/,
   /^최강 자격증/,
   /^--- page \d+ ---$/,
-  /^◐.*◑$/,
+  // 표본검수(Step 7) 중 발견: 페이지가 넘어갈 때마다 반복되는 헤더
+  // "{자격증명}             ◐2005년 10월 02일 필기 기출문제 ◑"가 실제로는
+  // ◐로 시작하지 않고 자격증명이 앞에 붙는다. 기존 정규식(^◐.*◑$)은 줄 전체가
+  // ◐로 시작해야 매칭되어 52개 파일의 ◐...◑ 포함 줄 207개 중 203개를 걸러내지
+  // 못했다 — 문제 중간에 페이지가 넘어가면 이 헤더 줄이 직전 문항의 마지막 보기에
+  // 그대로 이어붙어 정답 표시는 있지만 내용이 오염된 보기를 조용히 만들어냈다
+  // (표본검수에서 유기농업기능사 2005-10-02 문항60, 종자기능사 2002-01-27 문항60,
+  // 종자기능사 2011-02-13 문항20에서 실제로 확인). ◐...◑ 쌍은 이 헤더 포맷에만
+  // 쓰이므로, 줄 안 어디에 있든 매칭하도록 앵커를 제거했다.
+  /◐.*◑/,
 ]
+
+// 실제 raw.md 52개 파일 전수조사 결과, 모든 파일이 마지막 문항(60번) 뒤에
+// "전자문제집 CBT 홈페이지 : ..."로 시작하는 안내문/정답표 꼬리말을 정확히 1회 포함한다
+// (헤더의 "전자문제집 CBT : www.comcbt.com"과는 "홈페이지" 유무로 구별됨).
+// 이 꼬리말 블록에는 줄 단위 숫자(1,2,3...)와 단독 원문자(④,③...)로 이루어진 정답표가
+// 포함되어 있어, 라인 단위 노이즈 필터로는 걸러지지 않고 마지막 문항 블록에 섞여
+// 보기를 덮어쓴다. 본문 파싱 전에 이 지점에서 원본 텍스트 자체를 잘라내
+// 꼬리말 전체를 파싱 대상에서 원천 배제한다.
+const FOOTER_BOUNDARY_PATTERN = /^전자문제집 CBT 홈페이지/m
 
 interface RawBlock {
   number: number
   lines: string[]
+}
+
+function truncateAtFooter(raw: string): string {
+  const idx = raw.search(FOOTER_BOUNDARY_PATTERN)
+  return idx === -1 ? raw : raw.slice(0, idx)
 }
 
 function stripNoiseLines(raw: string): string[] {
@@ -21,8 +45,54 @@ function stripNoiseLines(raw: string): string[] {
     .filter((line) => !NOISE_LINE_PATTERNS.some((p) => p.test(line.trim())))
 }
 
+function circledIndex(ch: string): number {
+  const bold = BOLD_CIRCLED.indexOf(ch)
+  if (bold >= 0) return bold
+  return PLAIN_CIRCLED.indexOf(ch)
+}
+
+// pymupdf 추출 과정에서 인접한 두 보기가 줄바꿈 없이 한 물리적 줄에 붙어 나오는 경우가
+// 있다 (예: "③ 토양유기물 분해 촉진  ④ 해충경감", "❶ homo도가 증가된다. ② homo도가
+// 변하지 아니한다."). 이런 줄은 원문자가 "정확히 2개" 나타나고 그 두 인덱스가 연속
+// (idx2 = idx1 + 1)이며 첫 원문자가 줄 맨 앞에 온다.
+//
+// 반대로 실수로 쪼개면 안 되는 경우도 있다: 보기 텍스트 자체가 원문자 나열을 답으로
+// 담고 있는 문제(예: "❶ ①, ②", "① ① 1개, ② 1개" — 실제 유기농업기능사 2006-07-16
+// 220번대, 종자기능사 2007-07-15 29번). 이런 줄은 원문자가 3개 이상 나타나므로
+// (선두 마커 1개 + 답안 텍스트에 포함된 원문자 2개 이상) 아래 조건에서 자동으로
+// 제외된다 — "정확히 2개"라는 조건이 핵심 방어선이다. 실제 52개 파일 전수조사로
+// 이 규칙이 두 패턴을 정확히 구분함을 확인했다 (glued 165건 전부 count==2 &&
+// 인접 인덱스, 오탐 후보 8건 전부 count>=3).
+function splitGluedMarkerLine(line: string): string[] {
+  const trimmed = line.trim()
+  const markerRegex = new RegExp(`[${ALL_CIRCLED.join('')}]`, 'g')
+  const matches = [...trimmed.matchAll(markerRegex)]
+  if (matches.length !== 2) return [line]
+
+  const [first, second] = matches
+  if (first.index !== 0) return [line]
+
+  const idx1 = circledIndex(first[0])
+  const idx2 = circledIndex(second[0])
+  if (idx2 !== idx1 + 1) return [line]
+
+  const firstPart = trimmed.slice(0, second.index).trimEnd()
+  const secondPart = trimmed.slice(second.index)
+  return [firstPart, secondPart]
+}
+
+function splitGluedMarkerLines(lines: string[]): string[] {
+  return lines.flatMap(splitGluedMarkerLine)
+}
+
 function isSubjectMarker(line: string): string | null {
-  const m = line.trim().match(/^\d+과목\s*[:：]\s*(.+)$/)
+  // 종자기능사 2011-02-13 원문 136행처럼 선두 숫자가 누락된 "과목 : 종자(임의구분)"
+  // 형태도 있다 (원래는 "1과목 : ..."이어야 함). 52개 파일 전수조사 결과 "과목 :"이
+  // 등장하는 모든 줄 중 이 1건만 선두 숫자가 없었고, 그 외 오탐 사례는 없었다.
+  // 숫자값 자체는 파싱 로직에서 사용하지 않으므로(과목명만 추출) 선두 숫자를
+  // 선택적으로 만들어도 안전하다 — 숫자가 없다고 이 문항 구간이 조용히 과목
+  // 미배정(subject: '')으로 새는 것을 막는 게 더 중요하다.
+  const m = line.trim().match(/^\d*과목\s*[:：]\s*(.+)$/)
   return m ? m[1].trim() : null
 }
 
@@ -46,12 +116,22 @@ function findChoiceMarker(line: string): { index: number; bold: boolean; rest: s
 }
 
 export function parseExam(raw: string, cert: string, round: string): Question[] {
-  const lines = stripNoiseLines(raw)
+  const content = truncateAtFooter(raw)
+  const lines = splitGluedMarkerLines(stripNoiseLines(content))
 
   // 1단계: 줄을 문제 블록과 과목 마커로 분리
   const blocks: RawBlock[] = []
   const subjectMarkerAfter: Record<number, string> = {} // key: 그 마커 직전 문제 번호
   let current: RawBlock | null = null
+  // 실전 52개 파일 전수 실행 중 발견된 세 번째 패턴: pymupdf가 문제 지문 중간의
+  // 소수점 숫자(예: "1.325에서 1.06으로", "1.0 cmolc/kg")를 줄바꿈으로 잘라내면
+  // 그 소수점 숫자가 물리적 줄의 맨 앞에 오게 되고, isQuestionStart의 "숫자+마침표"
+  // 정규식이 이를 새 문제 시작("1.")으로 오인한다 (유기농업기능사 2014-01-26 문항22,
+  // 2015-07-19 문항32에서 확인). 실제 문항 번호는 항상 1부터 결번 없이 1씩 증가하므로
+  // (이미 정상 통과하는 48개 파일 모두 1..60 연속 번호), 직전 문제 번호+1과 정확히
+  // 일치할 때만 진짜 새 문제 시작으로 인정한다. 그 외의 "N." 패턴은 지문 안의 숫자로
+  // 보고 현재 블록에 그대로 이어붙인다.
+  let lastQuestionNumber = 0
 
   for (const line of lines) {
     const subject = isSubjectMarker(line)
@@ -60,9 +140,10 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
       continue
     }
     const qNum = isQuestionStart(line)
-    if (qNum !== null) {
+    if (qNum !== null && qNum === lastQuestionNumber + 1) {
       if (current) blocks.push(current)
       current = { number: qNum, lines: [line.trim().replace(/^\d+\.\s*/, '')] }
+      lastQuestionNumber = qNum
       continue
     }
     if (current) current.lines.push(line.trim())
