@@ -1,0 +1,7 @@
+{
+  "certName": "유기농업기능사",
+  "totalQuestions": 60,
+  "timeLimitMinutes": 60,
+  "passingScore": 60,
+  "subjects": ["작물재배", "토양관리", "유기농업일반"]
+}
