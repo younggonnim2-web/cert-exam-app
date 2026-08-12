@@ -1,11 +1,14 @@
 // app/[cert]/page.tsx
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { certExists, getRounds } from '@/lib/getRounds'
+import { certExists, getRounds, safeDecodeSegment } from '@/lib/getRounds'
 
 export default function RoundListPage({ params }: { params: { cert: string } }) {
-  const cert = decodeURIComponent(params.cert)
-  if (!certExists(cert)) notFound()
+  // params.cert는 이 실행 환경에서 실측 확인 결과 percent-encoding이 남은 원문 그대로
+  // 전달된다 — 디코딩이 필요하다. safeDecodeSegment는 잘못된 encoding(리터럴 '%')에서
+  // URIError로 500 크래시하는 대신 null을 반환해 notFound()로 깔끔히 처리하게 한다.
+  const cert = safeDecodeSegment(params.cert)
+  if (cert === null || !certExists(cert)) notFound()
 
   const rounds = getRounds(cert)
   return (
@@ -20,7 +23,7 @@ export default function RoundListPage({ params }: { params: { cert: string } }) 
           {rounds.map((r) => (
             <li key={r.date}>
               <Link
-                href={`/${encodeURIComponent(cert)}/${r.date}`}
+                href={`/${encodeURIComponent(cert)}/${encodeURIComponent(r.date)}`}
                 className="block rounded-lg bg-surface-card p-4 text-ink hover:bg-gray-200"
               >
                 {r.date} 시행
