@@ -37,3 +37,6 @@ venv/
 # Next.js (auto-regenerated, Next's own default convention excludes these)
 next-env.d.ts
 *.tsbuildinfo
+
+# Vercel
+.vercel
