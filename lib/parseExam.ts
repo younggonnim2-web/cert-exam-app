@@ -121,7 +121,10 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
 
   // 1단계: 줄을 문제 블록과 과목 마커로 분리
   const blocks: RawBlock[] = []
-  const subjectMarkerAfter: Record<number, string> = {} // key: 그 마커 직전 문제 번호
+  // 마커를 발견 순서 그대로 배열에 쌓는다 — 문제 번호를 키로 쓰는 오브젝트였다면, 두
+  // 마커가 문제 하나 사이에 두지 않고 연달아 나올 때(같은 문제 번호 뒤에 붙어서 등장)
+  // 나중 마커가 앞 마커를 덮어써 과목 하나가 통째로 사라진다 (3단계 참고).
+  const subjectMarkers: { afterNumber: number; subject: string }[] = []
   let current: RawBlock | null = null
   // 실전 52개 파일 전수 실행 중 발견된 세 번째 패턴: pymupdf가 문제 지문 중간의
   // 소수점 숫자(예: "1.325에서 1.06으로", "1.0 cmolc/kg")를 줄바꿈으로 잘라내면
@@ -136,7 +139,7 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
   for (const line of lines) {
     const subject = isSubjectMarker(line)
     if (subject !== null) {
-      if (current) subjectMarkerAfter[current.number] = subject
+      if (current) subjectMarkers.push({ afterNumber: current.number, subject })
       continue
     }
     const qNum = isQuestionStart(line)
@@ -212,31 +215,79 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
   }
 
   // 3단계: 과목 마커를 역방향으로 적용 (마커가 나온 시점까지의 문제들에 과목 배정)
-  const sortedMarkerPoints = Object.keys(subjectMarkerAfter)
-    .map(Number)
-    .sort((a, b) => a - b)
 
   // 위와 같은 이유로: 과목 마커("N과목 : ...")가 파일 전체에서 하나도 발견되지 않으면
   // 모든 문항이 subject: ''로 조용히 채워진다. 실제 기출문제 파일에는 최소 1개 이상의
   // 과목 마커가 있어야 하므로, 0개인 경우는 원문 형식이 깨졌다는 신호로 보고 즉시 실패시킨다.
-  if (sortedMarkerPoints.length === 0) {
+  if (subjectMarkers.length === 0) {
     throw new Error(`${cert}/${round}: 과목 마커(N과목 : ...)를 하나도 찾지 못함`)
   }
 
+  // 실전 데이터에서 흔한 패턴: 같은 문제 번호 뒤에 마커가 연달아 나온다 (문항 사이에
+  // 별도 문제가 없어 "afterNumber"가 동일함 — 예: 유기농업기능사 2016-07-10 원문
+  // 125-126행 "1과목 : 작물재배" 바로 다음 줄에 "2과목 : 토양관리"). 표본검수에서
+  // 이 패턴으로 유기농업기능사 3개 회차, 종자기능사 12개 회차가 앞 과목 전체를
+  // 잃고 있었음을 확인했다 (문항 21까지가 전부 뒤 과목으로 잘못 배정됨).
+  //
+  // 같은 위치(afterNumber)에 마커가 여럿 모이면, 그 위치에서는 첫 번째 마커만
+  // 마감된다(자기 위치를 그대로 씀). 나머지는 "아직 마감되지 않은 과목"으로 이월되어,
+  // 다음으로 나오는 서로 다른 위치의 마커가 마감될 때 그 위치에서 대신 마감된다 —
+  // 정상 케이스(마커마다 위치가 다 다름)에서는 이 이월이 전혀 일어나지 않으므로
+  // 기존 배정 결과에 영향이 없다.
+  const markerGroups: { afterNumber: number; subjects: string[] }[] = []
+  for (const marker of subjectMarkers) {
+    const lastGroup = markerGroups[markerGroups.length - 1]
+    if (lastGroup && lastGroup.afterNumber === marker.afterNumber) {
+      lastGroup.subjects.push(marker.subject)
+    } else {
+      markerGroups.push({ afterNumber: marker.afterNumber, subjects: [marker.subject] })
+    }
+  }
+
+  const resolvedBoundaries: { afterNumber: number; subject: string }[] = []
+  let carryOver: string[] = []
+  for (const group of markerGroups) {
+    const pending = [...carryOver, ...group.subjects]
+    resolvedBoundaries.push({ afterNumber: group.afterNumber, subject: pending[0] })
+    carryOver = pending.slice(1)
+  }
+  // 마지막 그룹에서도 마감되지 못하고 남은 과목은 파일 끝까지 이어지는 과목이다 —
+  // 배정 루프는 markerIdx가 배열 끝을 넘어가면 마지막 currentSubject를 계속 쓰므로
+  // afterNumber 값 자체는 의미가 없다("다음 마커가 없다"는 사실만 중요함).
+  for (const subject of carryOver) {
+    resolvedBoundaries.push({ afterNumber: Infinity, subject })
+  }
+
   let markerIdx = 0
-  let currentSubject = sortedMarkerPoints.length > 0 ? subjectMarkerAfter[sortedMarkerPoints[0]] : ''
+  let currentSubject = resolvedBoundaries[0].subject
   for (const q of questions) {
     while (
-      markerIdx < sortedMarkerPoints.length &&
-      q.number > sortedMarkerPoints[markerIdx]
+      markerIdx < resolvedBoundaries.length &&
+      q.number > resolvedBoundaries[markerIdx].afterNumber
     ) {
       markerIdx++
       currentSubject =
-        markerIdx < sortedMarkerPoints.length
-          ? subjectMarkerAfter[sortedMarkerPoints[markerIdx]]
+        markerIdx < resolvedBoundaries.length
+          ? resolvedBoundaries[markerIdx].subject
           : currentSubject
     }
-    q.subject = subjectMarkerAfter[sortedMarkerPoints[markerIdx]] ?? currentSubject
+    q.subject = resolvedBoundaries[markerIdx]?.subject ?? currentSubject
+  }
+
+  // 위와 같은 이유: 글루드 마커가 몰려 있는 위치가 하필 실제 마지막 문제 번호와
+  // 겹치면(예: "2과목"/"3과목" 마커가 문항 60 뒤에 함께 붙어 나오는 경우), 이월된
+  // 과목이 자리 잡을 문제가 물리적으로 하나도 남지 않는다 — 이때는 앞선 collision
+  // 처리로도 복구할 수 없는 원본 손상이므로, 조용히 그 과목을 잃는 대신 이 회차
+  // 전체를 실패시킨다 (scripts/generate-questions.ts가 이 회차를 건너뛰고
+  // questions.json을 만들지 않는다).
+  const usedSubjects = new Set(questions.map((q) => q.subject))
+  const unassignedSubjects = [...new Set(resolvedBoundaries.map((b) => b.subject))].filter(
+    (s) => !usedSubjects.has(s)
+  )
+  if (unassignedSubjects.length > 0) {
+    throw new Error(
+      `${cert}/${round}: 과목 마커 위치가 몰려 있어 다음 과목이 문제를 하나도 배정받지 못함: ${unassignedSubjects.join(', ')}`
+    )
   }
 
   return questions
