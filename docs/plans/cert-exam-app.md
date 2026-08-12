@@ -770,21 +770,25 @@ describe('exam result persistence', () => {
   }
 
   it('saves and loads a result round-trip', () => {
-    saveResult('유기농업기능사', '2016-07-10', sampleResult)
-    expect(loadResult('유기농업기능사', '2016-07-10')).toEqual(sampleResult)
+    saveResult('유기농업기능사', '2016-07-10', 'exam', sampleResult)
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toEqual(sampleResult)
   })
 
   it('returns null when no result is saved', () => {
-    expect(loadResult('유기농업기능사', '2016-07-10')).toBeNull()
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
   })
 
   it('clears a saved result', () => {
-    saveResult('유기농업기능사', '2016-07-10', sampleResult)
-    clearResult('유기농업기능사', '2016-07-10')
-    expect(loadResult('유기농업기능사', '2016-07-10')).toBeNull()
+    saveResult('유기농업기능사', '2016-07-10', 'exam', sampleResult)
+    clearResult('유기농업기능사', '2016-07-10', 'exam')
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
   })
 })
 ```
+
+**코드 리뷰 반영 (구현 직후 진행된 코드 품질 리뷰에서 발견):** 위 스펙은 최초 버전이며, 실제 구현에는 두 가지가 추가/변경되었다.
+1. `loadAttempt`/`loadResult`는 `JSON.parse`의 try/catch만으로는 JSON *문법*만 검증할 뿐 *스키마*는 검증하지 않는다 — `as Attempt` 캐스트는 컴파일 타임에만 유효하다. `coding-style.md`(Input Validation)와 `golden-principles.md` #6(시스템 경계에서 검증)에 따라 zod로 `.safeParse()` 검증을 추가했다. 스키마 불일치 시에도 손상된 JSON과 동일하게 `null`을 반환한다.
+2. `resultKey`가 `mode`를 누락하고 있었다 — `attemptKey(cert, round, mode)`와 달리 `resultKey(cert, round)`는 exam/practice 결과가 같은 키에서 충돌할 수 있는 잠재적 버그였다. `saveResult`/`loadResult`/`clearResult` 시그니처에 `mode`를 추가해 `attemptKey`와 동일한 패턴으로 맞췄다. **아래 Task 8의 예시 코드도 이 새 시그니처를 반영해 수정되었다 — Task 8을 구현할 때는 `loadResult(cert, round)`가 아니라 `loadResult(cert, round, 'exam')` 형태를 사용해야 한다.**
 
 - [ ] **Step 2: 테스트 실패 확인**
 
@@ -795,8 +799,28 @@ Expected: FAIL — `Cannot find module './examStorage'`
 
 ```typescript
 // lib/examStorage.ts
+import { z } from 'zod'
 import type { Attempt } from './types'
 import type { GradeResult } from './grading'
+
+// 시스템 경계(localStorage, 사용자가 devtools로 직접 편집 가능)에서 읽어들이는 데이터는
+// 컴파일 타임 캐스트(`as Attempt`)만으로는 부족하다 — JSON 문법은 유효해도 스키마가
+// 어긋난 값이 그대로 UI 상태로 흘러들어갈 수 있다. zod로 형태까지 검증한다.
+const attemptSchema = z.object({
+  cert: z.string(),
+  round: z.string(),
+  mode: z.enum(['exam', 'practice']),
+  answers: z.record(z.string(), z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)])),
+  startedAt: z.number(),
+  remainingSeconds: z.number().optional(),
+})
+
+const gradeResultSchema = z.object({
+  correctCount: z.number(),
+  totalCount: z.number(),
+  scorePercent: z.number(),
+  wrongQuestionNumbers: z.array(z.number()),
+})
 
 export function attemptKey(cert: string, round: string, mode: Attempt['mode']): string {
   return `exam-attempt:${cert}:${round}:${mode}`
@@ -817,9 +841,12 @@ export function loadAttempt(
   const raw = localStorage.getItem(attemptKey(cert, round, mode))
   if (!raw) return null
   try {
-    return JSON.parse(raw) as Attempt
+    const parsed: unknown = JSON.parse(raw)
+    const result = attemptSchema.safeParse(parsed)
+    // 손상된 JSON이거나(사파리 프라이빗 모드 등) 스키마가 어긋난 데이터는 모두 새로
+    // 시작한 것으로 취급한다 — 크래시 대신 조용히 무시
+    return result.success ? (result.data as Attempt) : null
   } catch {
-    // 손상된 데이터(사파리 프라이빗 모드 등)는 새로 시작한 것으로 취급 — 크래시 대신 조용히 무시
     return null
   }
 }
@@ -831,30 +858,46 @@ export function clearAttempt(cert: string, round: string, mode: Attempt['mode'])
 // 채점 결과는 응시 상태(Attempt)와 별개로 저장한다 — plan-eng-review에서 지적된 대로,
 // finishExam()이 clearAttempt를 부르는 순간 결과 화면에서 새로고침하면 결과가 통째로
 // 사라지는 문제가 있었다. 결과는 사용자가 "다시풀기" 등 다음 행동을 고를 때만 지운다.
-function resultKey(cert: string, round: string): string {
-  return `exam-result:${cert}:${round}`
+// attemptKey와 마찬가지로 mode를 키에 포함한다 — 그러지 않으면 향후 연습모드 채점이
+// 추가됐을 때 같은 cert/round의 exam 결과와 practice 결과가 같은 키를 두고 서로
+// 덮어쓰게 된다.
+function resultKey(cert: string, round: string, mode: Attempt['mode']): string {
+  return `exam-result:${cert}:${round}:${mode}`
 }
 
-export function saveResult(cert: string, round: string, result: GradeResult): void {
-  localStorage.setItem(resultKey(cert, round), JSON.stringify(result))
+export function saveResult(
+  cert: string,
+  round: string,
+  mode: Attempt['mode'],
+  result: GradeResult
+): void {
+  localStorage.setItem(resultKey(cert, round, mode), JSON.stringify(result))
 }
 
-export function loadResult(cert: string, round: string): GradeResult | null {
-  const raw = localStorage.getItem(resultKey(cert, round))
+export function loadResult(
+  cert: string,
+  round: string,
+  mode: Attempt['mode']
+): GradeResult | null {
+  const raw = localStorage.getItem(resultKey(cert, round, mode))
   if (!raw) return null
   try {
-    return JSON.parse(raw) as GradeResult
+    const parsed: unknown = JSON.parse(raw)
+    const result = gradeResultSchema.safeParse(parsed)
+    return result.success ? (result.data as GradeResult) : null
   } catch {
     return null
   }
 }
 
-export function clearResult(cert: string, round: string): void {
-  localStorage.removeItem(resultKey(cert, round))
+export function clearResult(cert: string, round: string, mode: Attempt['mode']): void {
+  localStorage.removeItem(resultKey(cert, round, mode))
 }
 ```
 
 `GradeResult` 타입은 Task 5(`lib/grading.ts`)에서 정의된다 — `examStorage.ts` 상단 import에 `import type { GradeResult } from './grading'`를 추가해야 함. Task 4는 Task 5보다 먼저 나오지만, 타입 전용 import라 순환참조 문제는 없다 (런타임 의존성 없음).
+
+`zod`는 이 태스크에서 처음 추가되는 의존성이다 (`npm install zod`) — `package.json`의 `dependencies`에 반영해야 한다.
 
 - [ ] **Step 4: 테스트 통과 확인**
 
@@ -1557,7 +1600,7 @@ export default function ExamPage() {
         // plan-eng-review에서 지적된 버그: 예전엔 finishExam이 clearAttempt만 부르고
         // 결과 자체는 어디에도 저장하지 않아서, 결과 화면 직후 새로고침하면 60문항을
         // 처음부터 다시 풀어야 했다.
-        const savedResult = loadResult(cert, round)
+        const savedResult = loadResult(cert, round, 'exam')
         if (savedResult) {
           setResult(savedResult)
           setStatus('result')
@@ -1589,7 +1632,7 @@ export default function ExamPage() {
 
   function startFresh() {
     clearAttempt(cert, round, 'exam')
-    clearResult(cert, round)
+    clearResult(cert, round, 'exam')
     setResult(null)
     setAnswers({})
     setCurrentQuestionNumber(1)
@@ -1600,7 +1643,7 @@ export default function ExamPage() {
   function leaveResult() {
     // 결과를 보고 다른 화면(과목별연습/회차선택)으로 이동할 때는 결과를 지운다 —
     // "다시 풀기"가 아니라 결과 확인이 끝났다는 사용자의 명시적 신호이므로.
-    clearResult(cert, round)
+    clearResult(cert, round, 'exam')
   }
 
   function handleSelect(choice: 1 | 2 | 3 | 4) {
@@ -1621,7 +1664,7 @@ export default function ExamPage() {
     const graded = gradeAttempt(exam.questions, answers)
     setResult(graded)
     setStatus('result')
-    saveResult(cert, round, graded) // 결과는 다음 행동을 고를 때까지 남겨둔다
+    saveResult(cert, round, 'exam', graded) // 결과는 다음 행동을 고를 때까지 남겨둔다
     clearAttempt(cert, round, 'exam') // 진행 중이던 답안/타이머는 더 이상 필요 없음
   }
 

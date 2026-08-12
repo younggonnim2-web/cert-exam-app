@@ -59,6 +59,14 @@ describe('examStorage', () => {
     localStorage.setItem(attemptKey('유기농업기능사', '2016-07-10', 'exam'), '{not valid json')
     expect(loadAttempt('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
   })
+
+  it('returns null when stored JSON is valid but does not match the expected shape', () => {
+    localStorage.setItem(
+      attemptKey('유기농업기능사', '2016-07-10', 'exam'),
+      JSON.stringify({ foo: 'bar' })
+    )
+    expect(loadAttempt('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
+  })
 })
 
 describe('exam result persistence', () => {
@@ -83,17 +91,33 @@ describe('exam result persistence', () => {
   }
 
   it('saves and loads a result round-trip', () => {
-    saveResult('유기농업기능사', '2016-07-10', sampleResult)
-    expect(loadResult('유기농업기능사', '2016-07-10')).toEqual(sampleResult)
+    saveResult('유기농업기능사', '2016-07-10', 'exam', sampleResult)
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toEqual(sampleResult)
   })
 
   it('returns null when no result is saved', () => {
-    expect(loadResult('유기농업기능사', '2016-07-10')).toBeNull()
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
   })
 
   it('clears a saved result', () => {
-    saveResult('유기농업기능사', '2016-07-10', sampleResult)
-    clearResult('유기농업기능사', '2016-07-10')
-    expect(loadResult('유기농업기능사', '2016-07-10')).toBeNull()
+    saveResult('유기농업기능사', '2016-07-10', 'exam', sampleResult)
+    clearResult('유기농업기능사', '2016-07-10', 'exam')
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
+  })
+
+  it('keeps exam and practice results separate under the same cert/round', () => {
+    const practiceResult = { ...sampleResult, correctCount: 10 }
+    saveResult('유기농업기능사', '2016-07-10', 'exam', sampleResult)
+    saveResult('유기농업기능사', '2016-07-10', 'practice', practiceResult)
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toEqual(sampleResult)
+    expect(loadResult('유기농업기능사', '2016-07-10', 'practice')).toEqual(practiceResult)
+  })
+
+  it('returns null when stored result JSON is valid but does not match the expected shape', () => {
+    localStorage.setItem(
+      'exam-result:유기농업기능사:2016-07-10:exam',
+      JSON.stringify({ foo: 'bar' })
+    )
+    expect(loadResult('유기농업기능사', '2016-07-10', 'exam')).toBeNull()
   })
 })
