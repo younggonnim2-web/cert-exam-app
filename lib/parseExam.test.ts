@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { parseExam } from './parseExam'
 
+// 과목 마커("N과목 : ...")는 실제 PDF에서 자기 뒤에 오는 문제 묶음을 소개하는
+// 헤더 박스다 (렌더링해서 육안 확인: 박스가 항상 해당 과목 첫 문제 바로 위에 있다).
+// scripts/organize-exam-pdfs.py가 2단 컬럼을 인식해 텍스트를 뽑기 전에는 pymupdf가
+// 이 박스를 실제 위치와 다른 지점(대개 훨씬 뒤)에서 추출해, 마커가 마치 "직전
+// 문제들의 꼬리표"인 것처럼 보였다 — 그 착시를 기준으로 짠 이전 버전의 fixture는
+// 전부 폐기했다. 지금은 컬럼 인식 추출 결과와 일치하도록 마커를 항상 그 과목의
+// 첫 문제 "앞"에 둔다.
 const SAMPLE = `# 유기농업기능사 2016-07-10 필기 기출문제
 
 - 자격증: 유기농업기능사
@@ -12,6 +19,7 @@ const SAMPLE = `# 유기농업기능사 2016-07-10 필기 기출문제
 유기농업기능사             ◐2016년 07월 10일 필기 기출문제 ◑
 전자문제집 CBT : www.comcbt.com
 최강 자격증 기출문제 전자문제집 CBT : www.comcbt.com
+1과목 : 작물재배
 1. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?
    ❶ 일액현상
 ② 일비현상
@@ -22,13 +30,12 @@ const SAMPLE = `# 유기농업기능사 2016-07-10 필기 기출문제
 ② 지연형냉해
    ③ 병해형냉해
 ④ 장해형냉해
-1과목 : 작물재배
+2과목 : 토양관리
 3. 다음 중 토양의 것은?
    ① 보기1
 ❷ 보기2
    ③ 보기3
 ④ 보기4
-2과목 : 토양관리
 `
 
 describe('parseExam', () => {
@@ -147,6 +154,48 @@ describe('parseExam', () => {
     expect(questions[1].number).toBe(2)
     expect(questions[1].id).toBe('조경기능사-2099-01-05-002')
     expect(questions[1].text).toBe('정상 문제 2')
+  })
+
+  it('skips a "복원중" placeholder question from the source site (all four choices are the literal marker) instead of shipping it as a real question', () => {
+    // 실제 조경기능사 2007-01-28 원문에서 확인: comcbt.com이 못 복원한 문항을
+    // "문제복원중 ... N번을 누르시면 정답 처리 됩니다" 안내문 + 보기 4개 전부
+    // "복원중"으로 채워 넣는다. 이건 실제 시험 문제가 아니라 사이트의 임시 placeholder라
+    // 그대로 발행하면 학습자에게 존재하지 않는 문제를 "정답"과 함께 보여주게 된다.
+    const placeholderSample = `--- page 1 ---
+1. 문제복원중 기출문제 내용을 아시는 분께서는 오류신고 버튼을 이용하여 문제 내용 올려 주시면 감사하겠습니다.(3번을 누르시면 정답 처리 됩니다.)
+   ① 복원중
+② 복원중
+   ❸ 복원중
+④ 복원중
+2. 정상적으로 파싱되는 문제
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④ 보기4
+1과목 : 조경일반
+`
+    const questions = parseExam(placeholderSample, '조경기능사', '2099-01-07')
+    expect(questions).toHaveLength(1)
+    expect(questions[0].text).toBe('정상적으로 파싱되는 문제')
+  })
+
+  it('skips a question with just one "복원중" placeholder choice mixed into otherwise-real choices (유기농업기능사 2011-07-31 문항44 패턴)', () => {
+    const partialPlaceholderSample = `--- page 1 ---
+1. 과수재배를 위한 토양관리방법 중 옳은 것은? (복원 오류로 정확하지 않습니다. 정답은 4번입니다.)
+   ① 초생법은 토양의 입단구조를 파괴하기 쉽다.
+② 청경법은 지온의 과도한 변화를 감소시킨다.
+   ③ 복원중
+❹ 초생법은 질산태질소의 양을 감소시키는데 기여한다.
+2. 정상적으로 파싱되는 문제
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④ 보기4
+1과목 : 유기농업일반
+`
+    const questions = parseExam(partialPlaceholderSample, '유기농업기능사', '2099-01-08')
+    expect(questions).toHaveLength(1)
+    expect(questions[0].text).toBe('정상적으로 파싱되는 문제')
   })
 
   it('still throws when only some (not all four) choices are empty — a real extraction bug, not an image-only question', () => {
@@ -420,25 +469,40 @@ PC 버전 및 모바일 버전 완벽 연동
     expect(questions[1].choices).toEqual(['영양', '광선', '토양', '병해충'])
   })
 
-  it('does not lose the first subject when two subject markers appear back-to-back with no question between them (유기농업기능사 2016-07-10 원문 119-126행, 240-242행 — pymupdf가 "1과목 : 작물재배"와 "2과목 : 토양관리"를 문제 하나 사이에 두지 않고 연달아 추출)', () => {
-    // 원문에서 이 두 마커는 문항 21 직후에 붙어서 나온다. 기존 구현은 마커를 문제
-    // 번호를 키로 쓰는 오브젝트에 저장해 뒤 마커("토양관리")가 앞 마커("작물재배")를
-    // 덮어써, 작물재배 과목 전체(이 회차 60문항 중 21문항)가 통째로 사라지는 결과를
-    // 낳았다 — 과목별 연습 화면에서 "작물재배" 탭에 문제가 하나도 안 뜨는 버그로
-    // 실제 확인됨.
-    //
-    // 이 프로젝트의 기존(정상 동작하는) 마커 배정 규칙은 "마커가 나온 시점의 지문
-    // 내용"이 아니라 "다음 마커가 나오기 전까지"를 기준으로 과목을 소급 배정한다
-    // (예: 2016-04-02 원문에서도 "작물의 기원지" 문항이 내용상 작물재배처럼
-    // 보여도 다음 마커 전까지는 이전 과목으로 묶인다 — 정상 케이스에서 이미
-    // 그렇게 동작 중이므로 이 테스트도 같은 규칙을 따른다). 따라서 글루드 마커
-    // 그룹(1과목/2과목) 다음에 오는 문제들은 "2과목: 토양관리"가 실제로 마감되는
-    // 다음 마커(3과목) 전까지 전부 토양관리로 묶이고, 3과목 마커 이후 문제만
-    // 유기농업일반이 된다.
-    //
-    // 순차번호 가드를 만족시키기 위해 원문 문항 번호를 최소 재현에서는 1~5번으로
-    // 다시 매겼다. 지문/보기 텍스트는 원문 그대로다.
-    const backToBackMarkerSample = `--- page 1 ---
+  it('registers a subject marker that appears before any question instead of silently dropping it (컬럼 인식 재추출 후 "1과목" 마커는 문항 1 앞에 온다 — 조경기능사/유기농업기능사 2016-07-10 원문에서 실측 확인)', () => {
+    // organize-exam-pdfs.py가 2단 컬럼을 인식하기 전에는 "1과목" 헤더 박스가 pymupdf
+    // 추출 스트림에서 실제 위치보다 훨씬 뒤(이미 몇 문항이 지난 뒤)에 나와, current가
+    // 항상 non-null인 상태로 마커를 만났다. 컬럼 인식 추출로 고치고 나면 "1과목"은
+    // 정말로 문항 1 "앞"에서 나타나(current === null인 시점) — 이 시점의 마커를
+    // 조용히 버리면(예전 코드) 첫 과목 전체가 통째로 사라진다.
+    const leadingMarkerSample = `--- page 1 ---
+1과목 : 작물재배
+1. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?
+   ❶ 일액현상
+② 일비현상
+   ③ 증산작용
+④ Apoplast
+2과목 : 토양관리
+2. 다음 중 토양의 양분 보유력을 가장 증대시킬 수 있는 영농
+방법은?
+    ❶ 부식질 유기물의 시용
+② 질소비료의 시용
+    ③ 모래의 객토
+④ 경운의 실시
+`
+    const questions = parseExam(leadingMarkerSample, '유기농업기능사', '2099-01-09')
+    expect(questions).toHaveLength(2)
+    expect(questions[0].subject).toBe('작물재배')
+    expect(questions[1].subject).toBe('토양관리')
+  })
+
+  it('when two subject markers are glued with zero questions between them, only the later one governs the following batch (the earlier one is superseded, not an error)', () => {
+    // 헤더 해석에서는 "과목에 문제가 0개"가 데이터 손상의 신호가 아니다 — 마커가
+    // 소개하는 구간은 항상 "자기 위치부터 다음 마커 전까지"이므로, 바로 다음에 또
+    // 다른 마커가 붙어 나오면 앞 마커의 구간은 원래도 비어 있었을 구간이다.
+    const gluedLeadingMarkersSample = `--- page 1 ---
+1과목 : 작물재배
+2과목 : 토양관리
 1. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?
    ❶ 일액현상
 ② 일비현상
@@ -450,65 +514,17 @@ PC 버전 및 모바일 버전 완벽 연동
 ② 질소비료의 시용
     ③ 모래의 객토
 ④ 경운의 실시
-1과목 : 작물재배
-2과목 : 토양관리
+3과목 : 유기농업일반
 3. 물에 의한 침식을 가장 받기 쉬운 토성은?
     ❶ 식토
 ② 양토
     ③ 사토
 ④ 사양토
-4. 유기농업 생산체계의 목표가 아닌 것은?
-    ❶ 작물 및 축산물 생산성 최대화를 추구한다.
-② 토양미생물의 활동을 촉진하는 농업을 추구한다.
-    ③ 병해충저항성 작물을 재배한다.
-④ 유기물순환을 촉진한다.
-3과목 : 유기농업일반
-5. 유기축산물 인증기준으로 옳은 것은?
-    ❶ 무항생제 사료를 급여한다.
-② 성장촉진제를 사용한다.
-    ③ 항생제를 예방적으로 사용한다.
-④ 합성 첨가제를 사용한다.
 `
-    const questions = parseExam(backToBackMarkerSample, '유기농업기능사', '2016-07-10')
-    expect(questions).toHaveLength(5)
-    expect(questions[0].subject).toBe('작물재배')
-    expect(questions[1].subject).toBe('작물재배')
-    expect(questions[2].subject).toBe('토양관리')
-    expect(questions[3].subject).toBe('토양관리')
-    expect(questions[4].subject).toBe('유기농업일반')
-  })
-
-  it('throws instead of silently dropping a subject when glued markers leave it with no room (유기농업기능사 2007-07-15 원문 130-131행, 375행 — "2과목"/"3과목" 마커가 각각 문항 수 사이에 두지 않고 붙어 나오다가, 이월된 마지막 과목이 자리 잡을 문제가 실제 마지막 문항 뒤에 하나도 남지 않음)', () => {
-    // 원문 구조: "1과목 : 작물재배"와 "2과목 : 토양관리"가 문항 21 직후에 붙어서
-    // 나오고(3단계 정상 처리 대상), "3과목 : 유기농업일반"은 이 회차의 실제 마지막
-    // 문항(60번) 바로 뒤에 단독으로 나온다. 이월 로직이 "토양관리"를 문항 60에서
-    // 마감시키면, 원래 "유기농업일반" 자신의 몫이었던 문항이 하나도 남지 않는다 —
-    // 원본 PDF 추출이 이 회차의 과목 경계 정보를 이미 잃어버렸다는 뜻이므로, 추측해서
-    // 잘못된 과목을 배정하는 대신 명시적으로 실패시켜야 한다.
-    // 순차번호 가드를 만족시키기 위해 최소 재현에서는 원문 문항 번호를 1~3번으로
-    // 다시 매겼다.
-    const noRoomForLastSubjectSample = `--- page 1 ---
-1. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?
-   ❶ 일액현상
-② 일비현상
-   ③ 증산작용
-④ Apoplast
-1과목 : 작물재배
-2과목 : 토양관리
-2. 물에 의한 침식을 가장 받기 쉬운 토성은?
-    ❶ 식토
-② 양토
-    ③ 사토
-④ 사양토
-3. 다음 중 포식성 천적은?
-    ① 기생벌
-② 세균
-    ❸ 무당벌레
-④ 선충
-3과목 : 유기농업일반
-`
-    expect(() =>
-      parseExam(noRoomForLastSubjectSample, '유기농업기능사', '2007-07-15')
-    ).toThrow(/유기농업일반/)
+    const questions = parseExam(gluedLeadingMarkersSample, '유기농업기능사', '2099-01-10')
+    expect(questions).toHaveLength(3)
+    expect(questions[0].subject).toBe('토양관리')
+    expect(questions[1].subject).toBe('토양관리')
+    expect(questions[2].subject).toBe('유기농업일반')
   })
 })

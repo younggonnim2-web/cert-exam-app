@@ -139,7 +139,13 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
   for (const line of lines) {
     const subject = isSubjectMarker(line)
     if (subject !== null) {
-      if (current) subjectMarkers.push({ afterNumber: current.number, subject })
+      // "N과목 : ..." 마커는 그 뒤에 오는 문제 묶음을 소개하는 헤더 박스다(실제 PDF를
+      // 렌더링해서 눈으로 확인: 박스가 항상 해당 과목 첫 문제 바로 위에 있다). 그래서
+      // 첫 번째 마커("1과목")는 문제가 하나도 시작되기 전에 나타날 수 있고, 그 시점엔
+      // current가 아직 null이다 — 이걸 걸러내면(예전 코드) 첫 과목이 통째로 사라진다.
+      // afterNumber는 "이 마커 이전에 마지막으로 시작된 문제 번호"이며, 문제가 하나도
+      // 없었으면 0이다. 3단계에서 이 값을 각 마커 "자기 과목이 시작되는 하한"으로 쓴다.
+      subjectMarkers.push({ afterNumber: current?.number ?? 0, subject })
       continue
     }
     const qNum = isQuestionStart(line)
@@ -195,6 +201,18 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
       )
     }
 
+    // 원본 사이트(comcbt.com)가 못 복원한 기출문제는 "문제복원중 ... N번을 누르시면
+    // 정답 처리 됩니다" 안내문과 함께 보기 자리를 문자 그대로 "복원중"으로 채워 넣는다
+    // — 표본검수에서 실제로 확인(조경기능사 2007-01-28 문항 38/48은 보기 4개 전부
+    // "복원중", 유기농업기능사 2011-07-31 문항 44는 보기 1개만 "복원중"이고 안내문에
+    // "복원 오류로 문제 및 보기 내용이 정확하지 않습니다"라고 사이트 스스로 명시). 이건
+    // 실제 시험 문제가 아니라 사이트의 임시 placeholder이므로, 위 그림 전용 문제와
+    // 동일하게 이 문항만 건너뛴다 — 텍스트가 비어있지 않아 위 "보기 4개 전부 비어있음"
+    // 체크로는 잡히지 않고, "복원중" 글자 그대로가 곧 실제 보기 내용이라는 신호다.
+    if (choices.some((c) => c.trim() === '복원중')) {
+      continue
+    }
+
     // 보기 4개가 전부 비어있으면(마커만 있고 텍스트가 하나도 없음) 파싱 실패가 아니라
     // 원본 PDF에서 보기 자체가 그림(사진/도해)으로만 제공되는 문제다 — 조경기능사
     // 표본검수에서 실제로 확인(예: "자연석을 모양으로 볼 때 사석은?"의 ①②③④가 전부
@@ -225,80 +243,43 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
     })
   }
 
-  // 3단계: 과목 마커를 역방향으로 적용 (마커가 나온 시점까지의 문제들에 과목 배정)
+  // 3단계: 과목 마커를 헤더로 적용 — 각 마커는 "자기보다 뒤, 다음 마커 전까지"의
+  // 문제들을 소개한다 (실제 PDF를 렌더링해 확인: "N과목" 박스는 항상 그 과목 첫
+  // 문제 바로 위에 있다). 그래서 마커 자신의 afterNumber는 그 마커가 담당하는 구간의
+  // "하한"이지 "상한"이 아니다 — 문항 배정 시엔 항상 다음 마커의 afterNumber를 상한
+  // 삼아 봐야 한다.
 
-  // 위와 같은 이유로: 과목 마커("N과목 : ...")가 파일 전체에서 하나도 발견되지 않으면
-  // 모든 문항이 subject: ''로 조용히 채워진다. 실제 기출문제 파일에는 최소 1개 이상의
-  // 과목 마커가 있어야 하므로, 0개인 경우는 원문 형식이 깨졌다는 신호로 보고 즉시 실패시킨다.
+  // 과목 마커("N과목 : ...")가 파일 전체에서 하나도 발견되지 않으면 모든 문항이
+  // subject: ''로 조용히 채워진다. 실제 기출문제 파일에는 최소 1개 이상의 과목
+  // 마커가 있어야 하므로, 0개인 경우는 원문 형식이 깨졌다는 신호로 보고 즉시 실패시킨다.
   if (subjectMarkers.length === 0) {
     throw new Error(`${cert}/${round}: 과목 마커(N과목 : ...)를 하나도 찾지 못함`)
   }
 
-  // 실전 데이터에서 흔한 패턴: 같은 문제 번호 뒤에 마커가 연달아 나온다 (문항 사이에
-  // 별도 문제가 없어 "afterNumber"가 동일함 — 예: 유기농업기능사 2016-07-10 원문
-  // 125-126행 "1과목 : 작물재배" 바로 다음 줄에 "2과목 : 토양관리"). 표본검수에서
-  // 이 패턴으로 유기농업기능사 3개 회차, 종자기능사 12개 회차가 앞 과목 전체를
-  // 잃고 있었음을 확인했다 (문항 21까지가 전부 뒤 과목으로 잘못 배정됨).
-  //
-  // 같은 위치(afterNumber)에 마커가 여럿 모이면, 그 위치에서는 첫 번째 마커만
-  // 마감된다(자기 위치를 그대로 씀). 나머지는 "아직 마감되지 않은 과목"으로 이월되어,
-  // 다음으로 나오는 서로 다른 위치의 마커가 마감될 때 그 위치에서 대신 마감된다 —
-  // 정상 케이스(마커마다 위치가 다 다름)에서는 이 이월이 전혀 일어나지 않으므로
-  // 기존 배정 결과에 영향이 없다.
-  const markerGroups: { afterNumber: number; subjects: string[] }[] = []
+  // 같은 위치(afterNumber)에 마커가 여럿 모이면(문제를 하나도 사이에 두지 않고 헤더
+  // 박스가 연달아 나옴 — 예: 그 과목에 문제가 0개인 회차), 그 지점 바로 다음 문제를
+  // 실제로 소개하는 건 마지막 마커뿐이다. 헤더 해석에서는 앞선 마커를 버려도 문제를
+  // 잃지 않는다 — 각 마커의 담당 구간은 자기 위치"부터" 시작하므로, 어차피 바로 다음
+  // 마커가 같은 지점에서 이어받으면 앞 마커의 구간은 원래 비어 있었을 구간이다.
+  const distinctMarkers: { afterNumber: number; subject: string }[] = []
   for (const marker of subjectMarkers) {
-    const lastGroup = markerGroups[markerGroups.length - 1]
-    if (lastGroup && lastGroup.afterNumber === marker.afterNumber) {
-      lastGroup.subjects.push(marker.subject)
+    const last = distinctMarkers[distinctMarkers.length - 1]
+    if (last && last.afterNumber === marker.afterNumber) {
+      distinctMarkers[distinctMarkers.length - 1] = marker
     } else {
-      markerGroups.push({ afterNumber: marker.afterNumber, subjects: [marker.subject] })
+      distinctMarkers.push(marker)
     }
-  }
-
-  const resolvedBoundaries: { afterNumber: number; subject: string }[] = []
-  let carryOver: string[] = []
-  for (const group of markerGroups) {
-    const pending = [...carryOver, ...group.subjects]
-    resolvedBoundaries.push({ afterNumber: group.afterNumber, subject: pending[0] })
-    carryOver = pending.slice(1)
-  }
-  // 마지막 그룹에서도 마감되지 못하고 남은 과목은 파일 끝까지 이어지는 과목이다 —
-  // 배정 루프는 markerIdx가 배열 끝을 넘어가면 마지막 currentSubject를 계속 쓰므로
-  // afterNumber 값 자체는 의미가 없다("다음 마커가 없다"는 사실만 중요함).
-  for (const subject of carryOver) {
-    resolvedBoundaries.push({ afterNumber: Infinity, subject })
   }
 
   let markerIdx = 0
-  let currentSubject = resolvedBoundaries[0].subject
   for (const q of questions) {
     while (
-      markerIdx < resolvedBoundaries.length &&
-      q.number > resolvedBoundaries[markerIdx].afterNumber
+      markerIdx + 1 < distinctMarkers.length &&
+      q.number > distinctMarkers[markerIdx + 1].afterNumber
     ) {
       markerIdx++
-      currentSubject =
-        markerIdx < resolvedBoundaries.length
-          ? resolvedBoundaries[markerIdx].subject
-          : currentSubject
     }
-    q.subject = resolvedBoundaries[markerIdx]?.subject ?? currentSubject
-  }
-
-  // 위와 같은 이유: 글루드 마커가 몰려 있는 위치가 하필 실제 마지막 문제 번호와
-  // 겹치면(예: "2과목"/"3과목" 마커가 문항 60 뒤에 함께 붙어 나오는 경우), 이월된
-  // 과목이 자리 잡을 문제가 물리적으로 하나도 남지 않는다 — 이때는 앞선 collision
-  // 처리로도 복구할 수 없는 원본 손상이므로, 조용히 그 과목을 잃는 대신 이 회차
-  // 전체를 실패시킨다 (scripts/generate-questions.ts가 이 회차를 건너뛰고
-  // questions.json을 만들지 않는다).
-  const usedSubjects = new Set(questions.map((q) => q.subject))
-  const unassignedSubjects = [...new Set(resolvedBoundaries.map((b) => b.subject))].filter(
-    (s) => !usedSubjects.has(s)
-  )
-  if (unassignedSubjects.length > 0) {
-    throw new Error(
-      `${cert}/${round}: 과목 마커 위치가 몰려 있어 다음 과목이 문제를 하나도 배정받지 못함: ${unassignedSubjects.join(', ')}`
-    )
+    q.subject = distinctMarkers[markerIdx].subject
   }
 
   // 4단계: 그림 전용 문제(2단계에서 continue로 건너뜀)가 있으면 원본 PDF 문항번호에
