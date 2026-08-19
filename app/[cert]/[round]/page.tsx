@@ -21,6 +21,12 @@ export default function ModeSelectPage({
   const base = `/${encodeURIComponent(cert)}/${encodeURIComponent(round)}`
   return (
     <main className="mx-auto max-w-md p-6">
+      <Link
+        href={`/${encodeURIComponent(cert)}`}
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted"
+      >
+        ← 뒤로
+      </Link>
       <h1 className="text-2xl font-semibold mb-6">{cert} {round}</h1>
       <div className="space-y-3">
         <Link
