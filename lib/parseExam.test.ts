@@ -103,6 +103,64 @@ describe('parseExam', () => {
     )
   })
 
+  it('skips a question whose choices are all empty (image-only options, e.g. 조경기능사 "그림" 문제) instead of failing the whole round', () => {
+    const imageOnlyChoiceSample = `--- page 1 ---
+1. 다음 그림과 같은 모양의 자연석은?
+   ①
+   ❷
+   ③
+   ④
+2. 정상적으로 파싱되는 문제
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④ 보기4
+1과목 : 조경일반
+`
+    const questions = parseExam(imageOnlyChoiceSample, '조경기능사', '2099-01-04')
+    expect(questions).toHaveLength(1)
+    expect(questions[0].text).toBe('정상적으로 파싱되는 문제')
+  })
+
+  it('renumbers 1..N contiguously after dropping an image-only question in the middle', () => {
+    const imageOnlyChoiceSample = `--- page 1 ---
+1. 정상 문제 1
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④ 보기4
+2. 다음 그림과 같은 모양의 자연석은?
+   ①
+   ❷
+   ③
+   ④
+3. 정상 문제 2
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④ 보기4
+1과목 : 조경일반
+`
+    const questions = parseExam(imageOnlyChoiceSample, '조경기능사', '2099-01-05')
+    expect(questions).toHaveLength(2)
+    expect(questions[0].number).toBe(1)
+    expect(questions[1].number).toBe(2)
+    expect(questions[1].id).toBe('조경기능사-2099-01-05-002')
+    expect(questions[1].text).toBe('정상 문제 2')
+  })
+
+  it('still throws when only some (not all four) choices are empty — a real extraction bug, not an image-only question', () => {
+    const partiallyEmptySample = `--- page 1 ---
+1. 보기 하나만 비어있는 문제
+   ❶ 보기1
+② 보기2
+   ③ 보기3
+④
+1과목 : 조경일반
+`
+    expect(() => parseExam(partiallyEmptySample, '조경기능사', '2099-01-06')).toThrow(/문항 1/)
+  })
+
   it('throws when the file has zero subject markers instead of silently assigning empty subjects', () => {
     const noSubjectSample = `--- page 1 ---
 1. 잎의 가장자리에 있는 수공에서 물이 나오는 현상은?

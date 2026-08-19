@@ -38,9 +38,14 @@ function main() {
         continue
       }
 
-      if (questions.length !== meta.totalQuestions) {
+      // parseExam은 이제 보기 4개가 전부 그림뿐이라 텍스트화할 수 없는 문항을 조용히
+      // 건너뛴다(lib/parseExam.ts 4단계 주석 참고) — 그래서 파싱된 개수가
+      // meta.totalQuestions보다 "조금" 적은 것은 정상이다. 더 많이 나오는 것은 있을 수
+      // 없는 일(블록을 중복 계산하는 버그)이라 그대로 실패시키고, 절반 넘게 사라지는
+      // 것도 그림 문제 몇 개로는 설명되지 않는 규모라 안전장치로 실패시킨다.
+      if (questions.length > meta.totalQuestions || questions.length < meta.totalQuestions / 2) {
         console.error(
-          `FAIL: ${cert}/${round} — expected ${meta.totalQuestions} questions, parsed ${questions.length}`
+          `FAIL: ${cert}/${round} — expected up to ${meta.totalQuestions} questions, parsed ${questions.length}`
         )
         failures.push(`${cert}/${round}`)
         continue
@@ -48,7 +53,9 @@ function main() {
 
       const outPath = join(certDir, round, 'questions.json')
       writeFileSync(outPath, JSON.stringify(questions, null, 2), 'utf-8')
-      console.log(`OK: ${cert}/${round} -> questions.json (${questions.length} questions)`)
+      const skipped = meta.totalQuestions - questions.length
+      const skippedNote = skipped > 0 ? `, 그림 전용 문제 ${skipped}개 제외` : ''
+      console.log(`OK: ${cert}/${round} -> questions.json (${questions.length} questions${skippedNote})`)
     }
   }
 

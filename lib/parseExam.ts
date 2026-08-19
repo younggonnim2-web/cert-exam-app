@@ -195,8 +195,19 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
       )
     }
 
-    // 위와 같은 이유로: 보기 4개 중 하나라도 비어있으면(파싱 실패 or 원문 누락)
-    // 조용히 빈 문자열을 배포하지 않고 즉시 실패시킨다.
+    // 보기 4개가 전부 비어있으면(마커만 있고 텍스트가 하나도 없음) 파싱 실패가 아니라
+    // 원본 PDF에서 보기 자체가 그림(사진/도해)으로만 제공되는 문제다 — 조경기능사
+    // 표본검수에서 실제로 확인(예: "자연석을 모양으로 볼 때 사석은?"의 ①②③④가 전부
+    // 돌 모양 삽화). pymupdf는 텍스트만 추출하므로 이런 문제는 원천적으로 텍스트화할
+    // 방법이 없다. 이 문항 하나만 건너뛰고 나머지 문항은 정상 발행한다 — 문항 하나
+    // 때문에 회차 60문항 전체를 통째로 버리는 것은 낭비다.
+    //
+    // 보기 일부만 비어있는 경우(1~3개)는 계속 실패시킨다 — 그건 그림 문제가 아니라
+    // 줄바꿈 이어붙이기 등 실제 파싱 버그일 가능성이 높고, 잘못된 정답이 조용히
+    // 배포되는 것을 막는 기존 안전장치를 그대로 유지해야 한다.
+    if (choices.every((c) => c.trim() === '')) {
+      continue
+    }
     const emptyChoiceIndex = choices.findIndex((c) => c.trim() === '')
     if (emptyChoiceIndex >= 0) {
       throw new Error(
@@ -290,5 +301,13 @@ export function parseExam(raw: string, cert: string, round: string): Question[] 
     )
   }
 
-  return questions
+  // 4단계: 그림 전용 문제(2단계에서 continue로 건너뜀)가 있으면 원본 PDF 문항번호에
+  // 구멍이 생긴다. exam/page.tsx의 이전/다음 버튼과 결과화면 오답 목록은 문항번호가
+  // 1..questions.length로 빈틈없이 이어진다고 가정하므로(구멍이 있으면 다음 버튼이
+  // 존재하지 않는 번호로 이동해 화면이 빈 채로 멈춘다), 과목 배정이 끝난 뒤 번호와
+  // id를 1부터 다시 순서대로 매긴다. 과목 경계 계산은 이미 끝났으므로 안전하다.
+  return questions.map((q, i) => {
+    const number = i + 1
+    return { ...q, number, id: `${cert}-${round}-${String(number).padStart(3, '0')}` }
+  })
 }
