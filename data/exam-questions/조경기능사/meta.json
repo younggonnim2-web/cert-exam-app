@@ -1,0 +1,7 @@
+{
+  "certName": "조경기능사",
+  "totalQuestions": 60,
+  "timeLimitMinutes": 60,
+  "passingScore": 60,
+  "subjects": ["조경일반", "조경재료", "조경 시공 및 관리"]
+}
