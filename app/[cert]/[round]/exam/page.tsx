@@ -2,7 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { OmrGrid } from '@/components/OmrGrid'
 import { QuestionDetail } from '@/components/QuestionDetail'
@@ -28,6 +28,7 @@ export default function ExamPage() {
   // safeDecodeSegment로 디코딩해야 하고, 잘못된 encoding이면 크래시 대신 에러 상태로
   // 전환한다. safeDecodeSegment 자체는 훅이 아니므로 아래 훅 호출들보다 먼저 계산해도
   // Rules of Hooks를 어기지 않는다.
+  const router = useRouter()
   const rawParams = useParams<{ cert: string; round: string }>()
   const decodedCert = safeDecodeSegment(rawParams.cert)
   const decodedRound = safeDecodeSegment(rawParams.round)
@@ -186,6 +187,14 @@ export default function ExamPage() {
     })
   }
 
+  function handleExitClick() {
+    // 답안/타이머는 매 선택·매 tick마다 saveAttempt로 저장되므로 나가도 이어풀기로
+    // 복원된다 — 확인창은 실수로 나가는 것만 막으면 된다.
+    if (window.confirm('시험을 종료하고 나가시겠습니까? 진행 상황은 저장됩니다.')) {
+      router.push(`/${encodeURIComponent(cert)}/${encodeURIComponent(round)}`)
+    }
+  }
+
   function handleSubmitClick() {
     if (!exam) return
     const unanswered = exam.questions.length - Object.keys(answers).length
@@ -291,7 +300,17 @@ export default function ExamPage() {
   return (
     <main className="mx-auto max-w-2xl p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-semibold text-ink">전체 모의고사</h1>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExitClick}
+            aria-label="뒤로가기"
+            className="text-sm text-muted"
+          >
+            ← 뒤로
+          </button>
+          <h1 className="text-xl font-semibold text-ink">전체 모의고사</h1>
+        </div>
         <ExamTimer remainingSeconds={remainingSeconds} onExpire={finishExam} onTick={handleTick} />
       </div>
 

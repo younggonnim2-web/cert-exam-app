@@ -1,6 +1,7 @@
 // app/[cert]/[round]/practice/page.tsx
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { roundExists, safeDecodeSegment } from '@/lib/getRounds'
 import { QuestionList } from '@/components/QuestionList'
@@ -27,6 +28,12 @@ export default function PracticePage({
 
   return (
     <main className="mx-auto max-w-md p-6">
+      <Link
+        href={`/${encodeURIComponent(cert)}/${encodeURIComponent(round)}`}
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted"
+      >
+        ← 뒤로
+      </Link>
       <h1 className="text-xl font-semibold mb-4 text-ink">과목별 연습</h1>
       <QuestionList cert={cert} round={round} questions={questions} subjects={meta.subjects} />
     </main>
