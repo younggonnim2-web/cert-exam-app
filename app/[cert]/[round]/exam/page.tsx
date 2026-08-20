@@ -8,7 +8,7 @@ import { OmrGrid } from '@/components/OmrGrid'
 import { QuestionDetail } from '@/components/QuestionDetail'
 import { ExamTimer } from '@/components/ExamTimer'
 import { loadAttempt, saveAttempt, clearAttempt, saveResult, loadResult, clearResult } from '@/lib/examStorage'
-import { recordWrongAnswer } from '@/lib/examHistory'
+import { recordWrongAnswer, recordExamAttempt } from '@/lib/examHistory'
 import { gradeAttempt, type GradeResult } from '@/lib/grading'
 // lib/getRounds.ts도 safeDecodeSegment를 재수출하지만, 그 파일은 최상단에서
 // node:fs를 import하기 때문에 이 클라이언트 컴포넌트에서 거기서 가져오면 webpack이
@@ -89,6 +89,15 @@ export default function ExamPage() {
       if (chosenAnswer === undefined) continue
       recordWrongAnswer({ cert, round, mode: 'exam', questionNumber, chosenAnswer, attemptDate })
     }
+    recordExamAttempt({
+      cert,
+      round,
+      attemptDate,
+      correctCount: graded.correctCount,
+      totalCount: graded.totalCount,
+      scorePercent: graded.scorePercent,
+      passed: graded.scorePercent >= exam.passingScore,
+    })
   }, [])
 
   const handleTick = useCallback((r: number) => {

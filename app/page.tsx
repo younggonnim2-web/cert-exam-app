@@ -9,7 +9,7 @@ export default function HomePage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">자격증 선택</h1>
         <Link href="/history" className="text-sm text-muted underline">
-          오답 이력
+          학습 기록
         </Link>
       </div>
       {certs.length === 0 ? (

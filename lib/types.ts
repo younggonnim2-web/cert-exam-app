@@ -40,3 +40,13 @@ export interface WrongAnswerEntry {
   chosenAnswer: 1 | 2 | 3 | 4
   attemptDate: string // 실제 푼 날짜(YYYY-MM-DD), 회차 시행일과 다름
 }
+
+export interface ExamAttemptSummary {
+  cert: string
+  round: string // 회차 시행일(YYYY-MM-DD)
+  attemptDate: string // 실제 응시한 날짜(YYYY-MM-DD), 회차 시행일과 다름
+  correctCount: number
+  totalCount: number
+  scorePercent: number
+  passed: boolean
+}
