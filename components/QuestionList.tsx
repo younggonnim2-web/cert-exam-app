@@ -2,9 +2,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { loadAttempt, saveAttempt } from '@/lib/examStorage'
+import { loadAttempt, saveAttempt, clearAttempt } from '@/lib/examStorage'
 import { recordWrongAnswer } from '@/lib/examHistory'
 import type { Question } from '@/lib/types'
+
+type Status = 'checking' | 'resume-prompt' | 'active'
 
 export function QuestionList({
   cert,
@@ -19,12 +21,33 @@ export function QuestionList({
 }) {
   const [selected, setSelected] = useState<Record<number, 1 | 2 | 3 | 4>>({})
   const [activeSubject, setActiveSubject] = useState(subjects[0])
+  // 회차를 다시 선택해 들어올 때마다 예전 답안이 아무 안내 없이 그대로 남아있던
+  // 문제(실사용 중 발견 — 회차 선택 화면을 다시 거쳐 들어와도 초기화가 안 됨) —
+  // exam/page.tsx가 이미 쓰는 것과 같은 "이어풀기/새로 시작" 확인창을 여기도 둔다.
+  // 'checking' 동안은 화면에 아무것도 그리지 않아, 저장된 답안이 잠깐 보였다가
+  // 확인창으로 바뀌는 깜빡임을 막는다.
+  const [status, setStatus] = useState<Status>('checking')
 
-  // 이탈 복구: 마운트 시 저장된 답안이 있으면 불러온다
   useEffect(() => {
     const saved = loadAttempt(cert, round, 'practice')
-    if (saved) setSelected(saved.answers)
+    if (saved && Object.keys(saved.answers).length > 0) {
+      setStatus('resume-prompt')
+    } else {
+      setStatus('active')
+    }
   }, [cert, round])
+
+  function resumeSaved() {
+    const saved = loadAttempt(cert, round, 'practice')
+    if (saved) setSelected(saved.answers)
+    setStatus('active')
+  }
+
+  function startFresh() {
+    clearAttempt(cert, round, 'practice')
+    setSelected({})
+    setStatus('active')
+  }
 
   function handleSelect(questionNumber: number, choice: 1 | 2 | 3 | 4, correctAnswer: 1 | 2 | 3 | 4) {
     const next = { ...selected, [questionNumber]: choice }
@@ -50,6 +73,29 @@ export function QuestionList({
   // 알린다.
   if (subjects.length === 0) {
     return <p className="text-sm text-muted">이 회차에 등록된 과목이 없습니다.</p>
+  }
+
+  if (status === 'checking') {
+    return null
+  }
+
+  if (status === 'resume-prompt') {
+    return (
+      <div className="text-center py-6">
+        <p className="mb-4 text-ink">이전에 학습하던 기록이 있습니다.</p>
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={resumeSaved}
+            className="rounded-md bg-blue-500 text-white px-4 py-2 font-semibold"
+          >
+            이어풀기
+          </button>
+          <button onClick={startFresh} className="rounded-md border border-hairline px-4 py-2 text-ink">
+            새로 시작
+          </button>
+        </div>
+      </div>
+    )
   }
 
   const visible = questions.filter((q) => q.subject === activeSubject)
