@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { loadAttempt, saveAttempt } from '@/lib/examStorage'
+import { recordWrongAnswer } from '@/lib/examHistory'
 import type { Question } from '@/lib/types'
 
 export function QuestionList({
@@ -25,10 +26,21 @@ export function QuestionList({
     if (saved) setSelected(saved.answers)
   }, [cert, round])
 
-  function handleSelect(questionNumber: number, choice: 1 | 2 | 3 | 4) {
+  function handleSelect(questionNumber: number, choice: 1 | 2 | 3 | 4, correctAnswer: 1 | 2 | 3 | 4) {
     const next = { ...selected, [questionNumber]: choice }
     setSelected(next)
     saveAttempt({ cert, round, mode: 'practice', answers: next, startedAt: Date.now() })
+
+    if (choice !== correctAnswer) {
+      recordWrongAnswer({
+        cert,
+        round,
+        mode: 'practice',
+        questionNumber,
+        chosenAnswer: choice,
+        attemptDate: new Date().toISOString().slice(0, 10),
+      })
+    }
   }
 
   // 방어적 빈 상태: 현재 실 데이터(회차 50개)에는 발생하지 않지만(meta.json subjects
@@ -90,7 +102,7 @@ export function QuestionList({
                     <button
                       key={i}
                       type="button"
-                      onClick={() => handleSelect(q.number, choiceNum)}
+                      onClick={() => handleSelect(q.number, choiceNum, q.answer)}
                       aria-pressed={isSelected}
                       aria-label={`${choiceNum}번. ${choice}${statusSuffix}`}
                       className={`block w-full text-left px-3 py-2 rounded-md border bg-white ${

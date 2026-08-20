@@ -8,6 +8,7 @@ import { OmrGrid } from '@/components/OmrGrid'
 import { QuestionDetail } from '@/components/QuestionDetail'
 import { ExamTimer } from '@/components/ExamTimer'
 import { loadAttempt, saveAttempt, clearAttempt, saveResult, loadResult, clearResult } from '@/lib/examStorage'
+import { recordWrongAnswer } from '@/lib/examHistory'
 import { gradeAttempt, type GradeResult } from '@/lib/grading'
 // lib/getRounds.ts도 safeDecodeSegment를 재수출하지만, 그 파일은 최상단에서
 // node:fs를 import하기 때문에 이 클라이언트 컴포넌트에서 거기서 가져오면 webpack이
@@ -79,6 +80,15 @@ export default function ExamPage() {
     setStatus('result')
     saveResult(cert, round, 'exam', graded) // 결과는 다음 행동을 고를 때까지 남겨둔다
     clearAttempt(cert, round, 'exam') // 진행 중이던 답안/타이머는 더 이상 필요 없음
+
+    // 미응답 문항(answers에 값이 없음)은 "틀렸다"가 아니라 "안 풀었다"이므로 오답
+    // 이력에 남기지 않는다.
+    const attemptDate = new Date().toISOString().slice(0, 10)
+    for (const questionNumber of graded.wrongQuestionNumbers) {
+      const chosenAnswer = answers[questionNumber]
+      if (chosenAnswer === undefined) continue
+      recordWrongAnswer({ cert, round, mode: 'exam', questionNumber, chosenAnswer, attemptDate })
+    }
   }, [])
 
   const handleTick = useCallback((r: number) => {

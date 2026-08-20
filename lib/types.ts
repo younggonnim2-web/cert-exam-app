@@ -31,3 +31,12 @@ export interface Attempt {
   startedAt: number // epoch ms
   remainingSeconds?: number // exam 모드에서만 사용
 }
+
+export interface WrongAnswerEntry {
+  cert: string
+  round: string // 회차 시행일(YYYY-MM-DD) — 문항 데이터 조회용
+  mode: 'exam' | 'practice'
+  questionNumber: number
+  chosenAnswer: 1 | 2 | 3 | 4
+  attemptDate: string // 실제 푼 날짜(YYYY-MM-DD), 회차 시행일과 다름
+}
