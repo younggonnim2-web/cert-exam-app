@@ -25,13 +25,22 @@ export function WrongQuestionReview({
           </span>
         )}
       </p>
+      {question.stemImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={question.stemImage}
+          alt={`${question.number}번 문제 그림`}
+          className="mb-2 max-w-full rounded-md border border-hairline"
+        />
+      )}
       <div className="space-y-1">
         {question.choices.map((choice, i) => {
           const choiceNum = (i + 1) as 1 | 2 | 3 | 4
           const isCorrectChoice = choiceNum === question.answer
           const isChosen = choiceNum === chosenAnswer
+          const choiceImage = question.choiceImages?.[i]
           return (
-            <p
+            <div
               key={i}
               className={`px-3 py-1.5 rounded-md border text-sm ${
                 isCorrectChoice
@@ -41,9 +50,19 @@ export function WrongQuestionReview({
                     : 'border-hairline text-ink'
               }`}
             >
-              {choiceNum}. {choice}
-              {isCorrectChoice ? ' (정답)' : isChosen ? ' (선택한 오답)' : ''}
-            </p>
+              <p>
+                {choiceNum}. {choice}
+                {isCorrectChoice ? ' (정답)' : isChosen ? ' (선택한 오답)' : ''}
+              </p>
+              {choiceImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={choiceImage}
+                  alt={`${choiceNum}번 보기 그림`}
+                  className="mt-1 max-h-32 rounded border border-hairline"
+                />
+              )}
+            </div>
           )
         })}
       </div>

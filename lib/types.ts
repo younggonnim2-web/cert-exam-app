@@ -8,6 +8,8 @@ export interface Question {
   answer: 1 | 2 | 3 | 4 // 1-indexed 정답 번호
   subject: string // 과목명, 예: "작물재배"
   explanation?: string // 정답 해설 — 일부 회차만 파일럿으로 채워져 있어 대부분 없음
+  stemImage?: string // 문제 지문에 딸린 그림 경로 (public/ 기준), 일부 문항만 존재
+  choiceImages?: [string, string, string, string] // 보기 4개가 전부 그림인 문항의 그림 경로, 일부 문항만 존재
 }
 
 export interface ExamMeta {

@@ -128,11 +128,20 @@ export function QuestionList({
               <p className="font-semibold mb-2 text-ink">
                 {q.number}. {q.text}
               </p>
+              {q.stemImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={q.stemImage}
+                  alt={`${q.number}번 문제 그림`}
+                  className="mb-2 max-w-full rounded-md border border-hairline"
+                />
+              )}
               <div className="space-y-1">
                 {q.choices.map((choice, i) => {
                   const choiceNum = (i + 1) as 1 | 2 | 3 | 4
                   const isSelected = selected[q.number] === choiceNum
                   const isCorrectChoice = choiceNum === q.answer
+                  const choiceImage = q.choiceImages?.[i]
                   // 색상만으로 정오답을 구분하면 WCAG 1.4.1(색상 단독 사용 금지) 위반이다.
                   // 시각적으로는 정답 라벨에 텍스트 접미사를 덧붙이고, 스크린리더에는
                   // aria-label로 각 보기의 상태를 명시적으로 전달한다. 색상 스타일은
@@ -161,6 +170,14 @@ export function QuestionList({
                     >
                       {choiceNum}. {choice}
                       {isAnswered && isCorrectChoice ? ' (정답)' : ''}
+                      {choiceImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={choiceImage}
+                          alt={`${choiceNum}번 보기 그림`}
+                          className="mt-1 max-h-32 rounded border border-hairline"
+                        />
+                      )}
                     </button>
                   )
                 })}
