@@ -1,4 +1,4 @@
-// app/history/[cert]/[round]/[date]/page.tsx
+// app/history/[cert]/[round]/[date]/[mode]/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,17 +7,23 @@ import Link from 'next/link'
 import { getWrongHistory, getExamAttempts } from '@/lib/examHistory'
 import { safeDecodeSegment } from '@/lib/safeDecodeSegment'
 import { WrongQuestionReview } from '@/components/WrongQuestionReview'
-import type { ExamAttemptSummary, Question, WrongAnswerEntry } from '@/lib/types'
+import type { Attempt, ExamAttemptSummary, Question, WrongAnswerEntry } from '@/lib/types'
 
 type PageStatus = 'loading' | 'error' | 'ready'
+type Mode = Attempt['mode']
 
-export default function ExamAttemptDetailPage() {
+function isMode(value: string | null): value is Mode {
+  return value === 'exam' || value === 'practice'
+}
+
+export default function AttemptDetailPage() {
   // useParams()는 percent-encoding이 남은 원문 그대로 값을 돌려준다(다른 클라이언트
   // 컴포넌트에서 실측 확인된 동일한 동작) — safeDecodeSegment로 디코딩해야 한다.
-  const rawParams = useParams<{ cert: string; round: string; date: string }>()
+  const rawParams = useParams<{ cert: string; round: string; date: string; mode: string }>()
   const cert = safeDecodeSegment(rawParams.cert)
   const round = safeDecodeSegment(rawParams.round)
   const date = rawParams.date // YYYY-MM-DD, URL 예약문자가 없어 디코딩 불필요
+  const mode = isMode(rawParams.mode) ? rawParams.mode : null
 
   const [status, setStatus] = useState<PageStatus>('loading')
   const [questions, setQuestions] = useState<Question[]>([])
@@ -25,20 +31,24 @@ export default function ExamAttemptDetailPage() {
   const [attempt, setAttempt] = useState<ExamAttemptSummary | null>(null)
 
   useEffect(() => {
-    if (cert === null || round === null) {
+    if (cert === null || round === null || mode === null) {
       setStatus('error')
       return
     }
 
     // 오답/응시 요약은 localStorage에서 즉시 읽고, 문항 지문/보기만 API에서 가져온다.
     const entries = getWrongHistory().filter(
-      (e) => e.cert === cert && e.round === round && e.attemptDate === date && e.mode === 'exam'
+      (e) => e.cert === cert && e.round === round && e.attemptDate === date && e.mode === mode
     )
     setWrongEntries(entries)
-    const found = getExamAttempts().find(
-      (a) => a.cert === cert && a.round === round && a.attemptDate === date
-    )
-    setAttempt(found ?? null)
+
+    // 점수/합격여부 요약은 모의고사에만 존재한다 — 과목별 연습은 "제출" 개념이 없다.
+    if (mode === 'exam') {
+      const found = getExamAttempts().find(
+        (a) => a.cert === cert && a.round === round && a.attemptDate === date
+      )
+      setAttempt(found ?? null)
+    }
 
     fetch(`/api/questions?cert=${encodeURIComponent(cert)}&round=${encodeURIComponent(round)}`)
       .then((r) => {
@@ -50,13 +60,13 @@ export default function ExamAttemptDetailPage() {
         setStatus('ready')
       })
       .catch(() => setStatus('error'))
-  }, [cert, round, date])
+  }, [cert, round, date, mode])
 
   if (status === 'loading') {
     return <main className="mx-auto max-w-2xl p-6">불러오는 중...</main>
   }
 
-  if (status === 'error' || cert === null || round === null) {
+  if (status === 'error' || cert === null || round === null || mode === null) {
     return (
       <main className="mx-auto max-w-2xl p-6 text-center">
         <p className="text-red-600 mb-4">기록을 불러오지 못했습니다.</p>
@@ -74,7 +84,8 @@ export default function ExamAttemptDetailPage() {
       </Link>
       <h1 className="text-xl font-semibold mb-1 text-ink">{cert}</h1>
       <p className="text-sm text-muted mb-4">
-        학습일: {date} · 회차: {round}
+        학습일: {date} · 회차: {round} ·{' '}
+        {mode === 'exam' ? '전체 모의고사' : '과목별 연습'}
       </p>
 
       {attempt && (
@@ -93,7 +104,7 @@ export default function ExamAttemptDetailPage() {
       <h2 className="text-sm font-medium text-muted mb-3">오답 {wrongEntries.length}문항</h2>
 
       {wrongEntries.length === 0 ? (
-        <p className="text-muted">이 응시에는 기록된 오답이 없습니다.</p>
+        <p className="text-muted">이 기록에는 남아있는 오답이 없습니다.</p>
       ) : (
         <div className="space-y-4">
           {wrongEntries
