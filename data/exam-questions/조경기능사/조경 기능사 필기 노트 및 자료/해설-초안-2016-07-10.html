@@ -1,0 +1,983 @@
+<title>조경기능사 해설 파일럿</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root {
+    --bg: #f2f4f0;
+    --surface: #ffffff;
+    --surface-2: #eaeee7;
+    --ink: #1c231e;
+    --muted: #5c6b60;
+    --border: #dde3da;
+    --accent: #2f6f5e;
+    --accent-ink: #ffffff;
+    --accent-soft: #e2ede8;
+    --correct-bg: #eaf5ee;
+    --correct-border: #3f8f63;
+    --correct-ink: #1f5c3d;
+    --flag-bg: #fbf1e1;
+    --flag-border: #c68a34;
+    --flag-ink: #8a5a17;
+    --chip-bg: #eef1ea;
+    --shadow: 0 1px 2px rgba(28, 35, 30, 0.06), 0 6px 20px rgba(28, 35, 30, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141815;
+      --surface: #1b211c;
+      --surface-2: #232a24;
+      --ink: #e7ece6;
+      --muted: #96a59b;
+      --border: #2c352e;
+      --accent: #6bbb9d;
+      --accent-ink: #0d1512;
+      --accent-soft: #1f2e28;
+      --correct-bg: #17281f;
+      --correct-border: #3f8f63;
+      --correct-ink: #86d4ac;
+      --flag-bg: #2a2115;
+      --flag-border: #c68a34;
+      --flag-ink: #e2b06a;
+      --chip-bg: #232a24;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #141815;
+    --surface: #1b211c;
+    --surface-2: #232a24;
+    --ink: #e7ece6;
+    --muted: #96a59b;
+    --border: #2c352e;
+    --accent: #6bbb9d;
+    --accent-ink: #0d1512;
+    --accent-soft: #1f2e28;
+    --correct-bg: #17281f;
+    --correct-border: #3f8f63;
+    --correct-ink: #86d4ac;
+    --flag-bg: #2a2115;
+    --flag-border: #c68a34;
+    --flag-ink: #e2b06a;
+    --chip-bg: #232a24;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans KR', 'Noto Sans KR', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  header.page {
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+
+  h1 {
+    font-family: 'Gowun Batang', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 36px);
+    margin: 0 0 14px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  .meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .meta-line strong { color: var(--ink); font-weight: 600; }
+
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: 14.5px;
+    color: var(--muted);
+    box-shadow: var(--shadow);
+  }
+
+  .note strong { color: var(--ink); }
+
+  .note .flag-inline {
+    color: var(--flag-ink);
+    font-weight: 600;
+  }
+
+  .subject-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 48px 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .subject-header h2 {
+    font-family: 'Gowun Batang', serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .subject-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .card.flagged {
+    border-left: 3px solid var(--flag-border);
+  }
+
+  .q-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .q-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border-radius: 6px;
+    min-width: 30px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .q-text {
+    font-size: 15.5px;
+    font-weight: 500;
+    margin: 3px 0 0;
+  }
+
+  .flag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--flag-ink);
+    background: var(--flag-bg);
+    border: 1px solid var(--flag-border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .choices {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 14px 42px;
+  }
+
+  .choice {
+    font-size: 14px;
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+
+  .choice.correct {
+    background: var(--correct-bg);
+    border-color: var(--correct-border);
+    color: var(--correct-ink);
+    font-weight: 600;
+  }
+
+  .choice .num {
+    font-family: 'IBM Plex Mono', monospace;
+    margin-right: 6px;
+    opacity: 0.75;
+  }
+
+  .explain {
+    margin-left: 42px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .explain-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
+  }
+
+  .explain p {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+
+  .explain .caveat {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--flag-ink);
+  }
+
+  footer.page {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+  }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow">해설 파일럿 · 정확도 검수용</p>
+    <h1>조경기능사 2016-07-10 해설 초안</h1>
+    <div class="meta-line">
+      <span>자격증: <strong>조경기능사</strong></span>
+      <span>회차: <strong>2016-07-10</strong></span>
+      <span>문항 수: <strong>58</strong></span>
+    </div>
+    <div class="note">
+      <strong>이 페이지의 목적:</strong> 원본 PDF에는 해설이 없어(정답 표시만 존재), 아래 해설은 제가 문제·정답을 보고 새로 작성한 것입니다.
+      대부분은 확신 있게 작성했지만, 애매했던 항목은 <span class="flag-inline">웹 검색으로 표준(조경설계기준 등)을 대조</span>했고,
+      이후 사용자분이 올려주신 <span class="flag-inline">필기 요약집 5종(총 90여 쪽)과도 전부 교차 확인</span>해서 대부분 문항이
+      정확히 일치하는 것을 재확인했습니다. 20번(래커)은 요약집에서 "건조 빠름"이라는 특징을 추가로 확인해 근거가 보강됐고,
+      49번(모터 그레이더)도 "운동장면을 평탄화" 기능이 확인됐습니다. 그래도 원본 "[보기]" 문구 자체가 파싱 과정에서
+      사라진 20·49번과, 5종 요약집 어디에도 근거를 찾지 못한 58번(연못 겨울철 관리)은 <span class="flag-inline">노란 표시</span>로
+      남겨뒀습니다.
+    </div>
+  </header>
+
+  <section id="subject-1">
+    <div class="subject-header">
+      <h2>조경일반</h2>
+      <span class="subject-count">1–15</span>
+    </div>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">1</span><p class="q-text">조선시대 궁궐이나 상류주택 정원에서 가장 독특하게 발달한 공간은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 전정</div>
+        <div class="choice correct">2. 후정</div>
+        <div class="choice">3. 주정</div>
+        <div class="choice">4. 중정</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>조선시대는 유교적 남녀유별 사상에 따라 안채 뒤쪽에 사적인 정원인 후원(후정)을 조성했다. 이는 중국·일본 정원과 구별되는 한국 전통정원의 독자적 특징으로 꼽힌다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">2</span><p class="q-text">영국 튜터왕조에서 유행했던 화단으로 낮게 깎은 회양목 등으로 화단을 여러 가지 기하학적 문양으로 구획 짓는 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 기식화단</div>
+        <div class="choice correct">2. 매듭화단</div>
+        <div class="choice">3. 카펫화단</div>
+        <div class="choice">4. 경재화단</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>매듭화단(knot garden)은 낮게 다듬은 회양목 등으로 둘레를 기하학적 매듭 무늬로 구획한 화단으로, 16세기 영국 튜더 왕조 시기에 유행했다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">3</span><p class="q-text">중정(patio)식 정원의 가장 대표적인 특징은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 토피어리</div>
+        <div class="choice correct">2. 색채타일</div>
+        <div class="choice">3. 동물 조각품</div>
+        <div class="choice">4. 수렵장</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>이슬람·스페인풍 영향을 받은 중정식 정원은 건물로 둘러싸인 좁은 공간에 화려한 색채타일과 분수·연못을 장식적으로 배치하는 것이 특징이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">4</span><p class="q-text">16세기 무굴제국의 인도정원과 가장 관련이 깊은 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 타지마할</div>
+        <div class="choice">2. 퐁텐블로</div>
+        <div class="choice">3. 클로이스터</div>
+        <div class="choice">4. 알함브라 궁원</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>무굴제국(인도)이 남긴 대표적 정원 유적은 타지마할이다. 나머지는 각각 프랑스(퐁텐블로), 중세 유럽 수도원(클로이스터), 스페인(알함브라)의 정원이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">5</span><p class="q-text">이탈리아의 노단 건축식 정원, 프랑스의 평면기하학식 정원 등은 자연 환경 요인 중 어떤 요인의 영향을 가장 크게 받아 발생한 것인가?</p></div>
+      <div class="choices">
+        <div class="choice">1. 기후</div>
+        <div class="choice correct">2. 지형</div>
+        <div class="choice">3. 식물</div>
+        <div class="choice">4. 토지</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>이탈리아는 구릉지가 많아 계단식(노단건축식) 정원이, 프랑스는 평탄한 지형이라 평면기하학식 정원이 발달했다 — 두 양식 모두 지형(地形) 조건의 영향을 가장 크게 받았다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">6</span><p class="q-text">중국 청나라 시대 대표적인 정원이 아닌 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 원명원 이궁</div>
+        <div class="choice">2. 이화원 이궁</div>
+        <div class="choice correct">3. 졸정원</div>
+        <div class="choice">4. 승덕피서산장</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>원명원·이화원·승덕피서산장은 청나라 황실 정원인 반면, 졸정원(拙政園)은 명나라 때 조성된 개인(사가) 정원이라 청나라 대표 정원에 해당하지 않는다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">7</span><p class="q-text">정원요소로 징검돌, 물통, 세수통, 석등 등의 배치를 중시하던 일본의 정원 양식은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 다정원</div>
+        <div class="choice">2. 침전조 정원</div>
+        <div class="choice">3. 축산고산수 정원</div>
+        <div class="choice">4. 평정고산수 정원</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>다정(茶庭, 로지)은 다도를 위한 일본 정원 양식으로, 손님이 다실로 가는 동선에 징검돌·물확·세수통·석등을 배치해 정갈한 분위기를 연출한다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">8</span><p class="q-text">다음 중 창경궁(昌慶宮)과 관련이 있는 건물은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 만춘전</div>
+        <div class="choice correct">2. 낙선재</div>
+        <div class="choice">3. 함화당</div>
+        <div class="choice">4. 사정전</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>낙선재는 창덕궁과 창경궁의 경계에 자리해 두 궁역과 밀접히 연결된 건물이다(후원에 장대석 화계와 괴석을 둔 조경적 특징도 자주 함께 출제된다). 나머지(만춘전·함화당·사정전)는 경복궁 소속 전각이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">9</span><p class="q-text">메소포타미아의 대표적인 정원은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 베다사원</div>
+        <div class="choice">2. 베르사이유 궁전</div>
+        <div class="choice correct">3. 바빌론의 공중정원</div>
+        <div class="choice">4. 타지마할 사원</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>메소포타미아 문명을 대표하는 정원은 세계 7대 불가사의 중 하나로 꼽히는 바빌론의 공중정원이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">10</span><p class="q-text">경관요소 중 높은 지각 강도(A)와 낮은 지각 강도(B)의 연결이 옳지 않은 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. A : 수평선, B : 사선</div>
+        <div class="choice">2. A : 따뜻한 색채, B : 차가운 색채</div>
+        <div class="choice">3. A : 동적인 상태, B : 고정된 상태</div>
+        <div class="choice">4. A : 거친 질감, B : 섬세하고 부드러운 질감</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>지각강도는 사선·동적 요소가 높고, 수평선처럼 안정된 요소는 낮다. "A(높음):수평선, B(낮음):사선"은 방향이 뒤바뀐 서술이라 틀렸다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">11</span><p class="q-text">국토교통부장관이 규정에 의하여 공원녹지기본계획을 수립 시 종합적으로 고려해야 하는 사항으로 가장 거리가 먼 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 장래 이용자의 특성 등 여건의 변화에 탄력적으로 대응할 수 있도록 할 것</div>
+        <div class="choice">2. 공원녹지의 보전·확충·관리·이용을 위한 장기발전방향을 제시하여 도시민들의 쾌적한 삶의 기반이 형성되도록 할 것</div>
+        <div class="choice">3. 광역도시계획, 도시·군기본계획 등 상위계획의 내용과 부합되어야 하고 도시·군기본계획의 부문별 계획과 조화되도록 할 것</div>
+        <div class="choice correct">4. 체계적·독립적으로 자연환경의 유지·관리와 여가활동의 장은 분리 형성하여 인간으로부터 자연의 피해를 최소화할 수 있도록 최소한의 제한적 연결망을 구축할 수 있도록 할 것</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>「도시공원 및 녹지 등에 관한 법률」은 공원녹지를 서로 연계된 축·망으로 확충하는 것을 기본 방향으로 한다. "독립적으로 분리 형성"하고 "제한적 연결망"만 구축한다는 서술은 연계성을 강조하는 법 취지와 반대라 고려사항에서 제외된다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">12</span><p class="q-text">다음 중 좁은 의미의 조경 또는 조원으로 가장 적합한 설명은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 복잡 다양한 근대에 이르러 적용되었다.</div>
+        <div class="choice">2. 기술자를 조경가라 부르기 시작하였다.</div>
+        <div class="choice">3. 정원을 포함한 광범위한 옥외공간 전반이 주대상이다.</div>
+        <div class="choice correct">4. 식재를 중심으로 한 전통적인 조경기술로 정원을 만드는 일만을 말한다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>좁은 의미의 조경(조원)은 정원을 만드는 전통적 식재기술 자체를 가리키며, 넓은 의미의 현대 조경은 옥외공간 전반을 계획·설계하는 것까지 포함한다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">13</span><p class="q-text">수목 또는 경사면 등의 주위 경관 요소들에 의하여 자연스럽게 둘러싸여 있는 경관을 무엇이라 하는가?</p></div>
+      <div class="choices">
+        <div class="choice">1. 파노라마 경관</div>
+        <div class="choice">2. 지형경관</div>
+        <div class="choice correct">3. 위요경관</div>
+        <div class="choice">4. 관개경관</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>수목이나 경사면 등 주변 요소에 둘러싸여 아늑하게 폐쇄된 느낌을 주는 경관을 위요경관이라 한다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">14</span><p class="q-text">조경양식에 대한 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 조경양식에는 정형식, 자연식, 절충식 등이 있다.</div>
+        <div class="choice correct">2. 정형식 조경은 영국에서 처음 시작된 양식으로 비스타축을 이용한 중앙 광로가 있다.</div>
+        <div class="choice">3. 자연식 조경은 동아시아에서 발달한 양식이며 자연 상태 그대로를 정원으로 조성한다.</div>
+        <div class="choice">4. 절충식 조경은 한 장소에 정형식과 자연식을 동시에 지니고 있는 조경양식이다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>정형식(기하학식) 정원은 이탈리아·프랑스에서 발달했다(베르사유 궁의 비스타 축이 대표적). 영국은 오히려 자연풍경식 정원의 발상지이므로 "영국에서 처음 시작"이 틀렸다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">15</span><p class="q-text">도시기본구상도의 표시기준 중 노란색은 어느 용지를 나타내는 것인가?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 주거용지</div>
+        <div class="choice">2. 관리용지</div>
+        <div class="choice">3. 보존용지</div>
+        <div class="choice">4. 상업용지</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>도시계획 도면 표시기준상 주거지역은 노란색(황색) 계열, 상업지역은 분홍·빨강, 공업지역은 보라·파랑, 녹지는 초록 계열로 표시한다.</p></div>
+    </article>
+  </section>
+
+  <section id="subject-2">
+    <div class="subject-header">
+      <h2>조경재료</h2>
+      <span class="subject-count">16–33</span>
+    </div>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">16</span><p class="q-text">가법혼색에 관한 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 2차색은 1차색에 비하여 명도가 높아진다.</div>
+        <div class="choice">2. 빨강 광원에 녹색 광원을 흰 스크린에 비추면 노란색이 된다.</div>
+        <div class="choice correct">3. 가법혼색의 삼원색을 동시에 비추면 검정이 된다.</div>
+        <div class="choice">4. 파랑에 녹색 광원을 비추면 시안(cyan)이 된다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>빛의 3원색(RGB)을 가법혼색하면 겹칠수록 명도가 높아져 모두 겹치면 흰색이 된다. "검정이 된다"는 감법혼색(색료 혼합) 결과와 혼동한 틀린 설명이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">17</span><p class="q-text">다음 중 직선의 느낌으로 가장 부적합한 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 여성적이다.</div>
+        <div class="choice">2. 굳건하다.</div>
+        <div class="choice">3. 딱딱하다.</div>
+        <div class="choice">4. 긴장감이 있다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>직선은 명확·안정·남성적이며 긴장감을 주는 느낌으로 해석되고, 부드럽고 여성적인 느낌은 곡선의 특성이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">18</span><p class="q-text">[보기]의 ( )안에 적합한 쥐똥나무 등을 이용한 생울타리용 관목의 식재간격은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 0.14 ~ 0.20</div>
+        <div class="choice correct">2. 0.25 ~ 0.75</div>
+        <div class="choice">3. 0.8 ~ 1.2</div>
+        <div class="choice">4. 1.2 ~ 1.5</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>조경설계기준상 생울타리용 관목의 표준 식재간격은 0.25~0.75m, 2~3줄 식재를 기본으로 하며 수종과 식재 장소에 따라 조정한다. (검색으로 표준 수치 대조함)</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">19</span><p class="q-text">일반적인 합성수지(plastics)의 장점으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 열전도율이 높다.</div>
+        <div class="choice">2. 성형가공이 쉽다.</div>
+        <div class="choice">3. 마모가 적고 탄력성이 크다.</div>
+        <div class="choice">4. 우수한 가공성으로 성형이 쉽다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>합성수지는 열전도율이 낮아 단열재로도 쓰일 만큼 열을 잘 전달하지 않는 것이 장점이다. "열전도율이 높다"는 반대로 서술된 오답이다.</p></div>
+    </article>
+
+    <article class="card flagged">
+      <div class="q-head">
+        <span class="q-num">20</span>
+        <p class="q-text">[보기]에 해당하는 도장공사의 재료는?</p>
+        <span class="flag-chip">⚠ 확인 필요</span>
+      </div>
+      <div class="choices">
+        <div class="choice">1. 유성페인트</div>
+        <div class="choice">2. 수성페인트</div>
+        <div class="choice correct">3. 래커</div>
+        <div class="choice">4. 니스</div>
+      </div>
+      <div class="explain">
+        <p class="explain-label">해설</p>
+        <p>보기 중 빠른 건조·광택·내후성이 특징인 도장재료는 래커(lacquer)다. 사용자분이 올려주신 요약집에도 "래커(건조빠름)"으로 명시돼 있어, 도장재료 중 래커의 핵심 특징(건조가 빠르다)은 교차 확인됐다.</p>
+        <p class="caveat">⚠ 다만 원본 PDF의 "[보기]" 표/설명 자체는 텍스트 추출 과정에서 누락돼, 시험에 실제 제시된 설명 문구는 확인하지 못했습니다.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">21</span><p class="q-text">변성암의 종류에 해당하는 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 사문암</div>
+        <div class="choice">2. 섬록암</div>
+        <div class="choice">3. 안산암</div>
+        <div class="choice">4. 화강암</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>변성암에는 사문암·편마암·대리석·규암 등이 있고, 섬록암·안산암·화강암은 화성암(각각 심성암·화산암·심성암)에 해당한다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">22</span><p class="q-text">일반적으로 목재의 비중과 가장 관련이 있으며, 목재성분 중 수분을 공기 중에서 제거한 상태의 비중을 말하는 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 생목비중</div>
+        <div class="choice correct">2. 기건비중</div>
+        <div class="choice">3. 함수비중</div>
+        <div class="choice">4. 절대 건조비중</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>목재를 대기 중에 장기간 두어 수분이 평형상태(함수율 약 15%)에 이르렀을 때의 비중을 기건비중이라 하며, 목재 강도 기준 등에 널리 사용된다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">23</span><p class="q-text">조경에서 사용되는 건설재료 중 콘크리트의 특징으로 옳은 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 압축강도가 크다.</div>
+        <div class="choice">2. 인장강도와 휨강도가 크다.</div>
+        <div class="choice">3. 자체 무게가 적어 모양변경이 쉽다.</div>
+        <div class="choice">4. 시공과정에서 품질의 양부를 조사하기 쉽다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>콘크리트는 압축강도는 크지만 인장강도·휨강도는 압축강도의 1/10 수준으로 작아, 철근으로 보강해야 하는 재료다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">24</span><p class="q-text">시멘트의 제조 시 응결시간을 조절하기 위해 첨가하는 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 광재</div>
+        <div class="choice">2. 점토</div>
+        <div class="choice correct">3. 석고</div>
+        <div class="choice">4. 철분</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>시멘트 클링커에 석고를 첨가하면 응결지연 작용을 해 급결을 막고 응결시간을 조절할 수 있다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">25</span><p class="q-text">타일붙임재료의 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 접착력과 내구성이 강하고 경제적이며 작업성이 있어야 한다.</div>
+        <div class="choice">2. 종류는 무기질 시멘트 모르타르와 유기질 고무계 또는 에폭시계 등이 있다.</div>
+        <div class="choice correct">3. 경량으로 투수율과 흡수율이 크고, 형상·색조의 자유로움 등이 우수하나 내화성이 약하다.</div>
+        <div class="choice">4. 접착력이 일정기준 이상 확보되어야만 타일의 탈락현상과 동해에 의한 내구성의 저하를 방지할 수 있다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>타일은 소성된 자기질·도기질 재료로 흡수율이 낮고 불에 강한(내화성이 우수한) 것이 특징이라, "투수율·흡수율이 크고 내화성이 약하다"는 서술이 틀렸다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">26</span><p class="q-text">미장 공사 시 미장재료로 활용될 수 없는 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 견치석</div>
+        <div class="choice">2. 석회</div>
+        <div class="choice">3. 점토</div>
+        <div class="choice">4. 시멘트</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>견치석은 크고 단단한 돌을 사각뿔 모양으로 다듬은 석축용 재료로 미장 재료가 아니며, 석회·점토·시멘트는 미장 반죽에 쓰인다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">27</span><p class="q-text">알루미늄의 일반적인 성질로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 열의 전도율이 높다.</div>
+        <div class="choice">2. 비중은 약 2.7 정도이다.</div>
+        <div class="choice">3. 전성과 연성이 풍부하다.</div>
+        <div class="choice correct">4. 산과 알칼리에 특히 강하다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>알루미늄은 열·전기전도율이 높고 전성·연성이 좋지만, 산과 특히 알칼리에는 약해 부식되기 쉽다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">28</span><p class="q-text">콘크리트 혼화재의 역할 및 연결이 옳지 않은 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 단위수량, 단위시멘트량의 감소 : AE감수제</div>
+        <div class="choice">2. 작업성능이나 동결융해 저항성능의 향상 : AE제</div>
+        <div class="choice">3. 강력한 감수효과와 강도의 대폭 증가 : 고성능감수제</div>
+        <div class="choice correct">4. 염화물에 의한 강재의 부식을 억제 : 기포제</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>염화물에 의한 강재 부식 억제는 방청제의 역할이며, 기포제는 경량화를 위해 콘크리트에 기포를 발생시키는 혼화제라 이 연결이 틀렸다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">29</span><p class="q-text">공원식재 시공 시 식재할 지피식물의 조건으로 가장 거리가 먼 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 관리가 용이하고 병충해에 잘 견뎌야 한다.</div>
+        <div class="choice">2. 번식력이 왕성하고 생장이 비교적 빨라야 한다.</div>
+        <div class="choice">3. 성질이 강하고 환경조건에 대한 적응성이 넓어야 한다.</div>
+        <div class="choice correct">4. 토양까지의 강수 전단을 위해 지표면을 듬성듬성 피복하여야 한다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>지피식물은 토양 유실 방지를 위해 지표면을 빽빽하게 피복해야 하며, "듬성듬성 피복"은 지피식물에 요구되는 조건과 반대다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">30</span><p class="q-text">줄기가 아래로 늘어지는 생김새의 수간을 가진 나무의 모양을 무엇이라 하는가?</p></div>
+      <div class="choices">
+        <div class="choice">1. 쌍간</div>
+        <div class="choice">2. 다간</div>
+        <div class="choice">3. 직간</div>
+        <div class="choice correct">4. 현애</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>줄기가 절벽에 매달리듯 아래로 늘어진 수형을 현애(懸崖)라 한다. 쌍간은 줄기 2개, 다간은 줄기 여러 개, 직간은 곧게 자라는 수형이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">31</span><p class="q-text">다음 중 광선(光線)과의 관계 상 음수(陰樹)로 분류하기 가장 적합한 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 박달나무</div>
+        <div class="choice correct">2. 눈주목</div>
+        <div class="choice">3. 감나무</div>
+        <div class="choice">4. 배롱나무</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>음수(그늘에서도 잘 자라는 나무)로는 주목·눈주목·회양목 등이 대표적이며, 박달나무·감나무·배롱나무는 햇빛을 많이 필요로 하는 양수에 속한다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">32</span><p class="q-text">가죽나무가 해당되는 과(科)는?</p></div>
+      <div class="choices">
+        <div class="choice">1. 운향과</div>
+        <div class="choice">2. 멀구슬나무과</div>
+        <div class="choice correct">3. 소태나무과</div>
+        <div class="choice">4. 콩과</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>가죽나무(가승목)는 소태나무과(Simaroubaceae)에 속하는 낙엽교목이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">33</span><p class="q-text">고로쇠나무와 복자기에 대한 설명으로 옳지 않은 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 복자기의 잎은 복엽이다.</div>
+        <div class="choice">2. 두 수종은 모두 열매는 시과이다.</div>
+        <div class="choice correct">3. 두 수종은 모두 단풍색이 붉은색이다.</div>
+        <div class="choice">4. 두 수종은 모두 과명이 단풍나무과이다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>고로쇠나무는 단풍이 노란색 계열이고 복자기만 붉게 물들어 "두 수종 모두 붉은색"이라는 서술이 틀렸다. 두 수종 모두 단풍나무과이며 열매가 시과(날개열매)라는 점은 옳다.</p></div>
+    </article>
+  </section>
+
+  <section id="subject-3">
+    <div class="subject-header">
+      <h2>조경 시공 및 관리</h2>
+      <span class="subject-count">34–58</span>
+    </div>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">34</span><p class="q-text">수피에 아름다운 얼룩무늬가 관상 요소인 수종이 아닌 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 노각나무</div>
+        <div class="choice">2. 모과나무</div>
+        <div class="choice">3. 배롱나무</div>
+        <div class="choice correct">4. 자귀나무</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>노각나무·모과나무·배롱나무는 수피가 얼룩무늬로 벗겨지며 관상가치가 높은 대표 수종이지만, 자귀나무는 수피 얼룩무늬가 특징인 수종이 아니다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">35</span><p class="q-text">열매를 관상목적으로 하는 조경 수목 중 열매색이 적색(홍색) 계열이 아닌 것은? (단, 열매색의 분류: 황색, 적색, 흑색)</p></div>
+      <div class="choices">
+        <div class="choice">1. 주목</div>
+        <div class="choice">2. 화살나무</div>
+        <div class="choice">3. 산딸나무</div>
+        <div class="choice correct">4. 굴거리나무</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>주목·화살나무·산딸나무는 열매가 적색(홍색) 계열이지만, 굴거리나무 열매는 흑색(검은자주색)으로 익어 계열이 다르다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">36</span><p class="q-text">흰말채나무의 특징 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 노란색의 열매가 특징적이다.</div>
+        <div class="choice">2. 층층나무과로 낙엽활엽관목이다.</div>
+        <div class="choice">3. 수피가 여름에는 녹색이나 가을, 겨울철의 붉은 줄기가 아름답다.</div>
+        <div class="choice">4. 잎은 대생하며 타원형 또는 난상타원형이고, 표면에 작은 털이 있으며 뒷면은 흰색의 특징을 갖는다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>흰말채나무는 흰색 열매가 특징이며(노란색이 아니다), 층층나무과 낙엽활엽관목으로 겨울철 붉은 줄기가 관상 포인트다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">37</span><p class="q-text">수목식재에 가장 적합한 토양의 구성비는? (단, 구성은 토양 : 수분 : 공기의 순서임)</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 50% : 25% : 25%</div>
+        <div class="choice">2. 50% : 10% : 40%</div>
+        <div class="choice">3. 40% : 40% : 20%</div>
+        <div class="choice">4. 30% : 40% : 30%</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>이상적인 식재 토양의 부피 구성비는 고상(토양) 50%, 액상(수분) 25%, 기상(공기) 25%가 표준으로 제시된다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">38</span><p class="q-text">차량 통행이 많은 지역의 가로수로 가장 부적합한 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 은행나무</div>
+        <div class="choice">2. 층층나무</div>
+        <div class="choice">3. 양버즘나무</div>
+        <div class="choice correct">4. 단풍나무</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>은행나무·양버즘나무(플라타너스)·층층나무는 대기오염과 답압에 강해 가로수로 많이 쓰이지만, 단풍나무는 공해와 답압에 약해 차량통행이 많은 곳에는 부적합하다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">39</span><p class="q-text">지주목 설치에 대한 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 수피와 지주가 닿은 부분은 보호조치를 취한다.</div>
+        <div class="choice">2. 지주목을 설치할 때에는 풍향과 지형 등을 고려한다.</div>
+        <div class="choice">3. 대형목이나 경관상 중요한 곳에는 당김줄형을 설치한다.</div>
+        <div class="choice correct">4. 지주는 뿌리 속에 박아 넣어 견고히 고정되도록 한다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>지주는 뿌리 활착을 방해하지 않도록 뿌리 부분을 피해 설치해야 하며, "뿌리 속에 박아 넣는다"는 뿌리를 손상시키는 잘못된 방법이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">40</span><p class="q-text">조경공사의 유형 중 환경생태복원 녹화공사에 속하지 않는 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 분수공사</div>
+        <div class="choice">2. 비탈면녹화공사</div>
+        <div class="choice">3. 옥상 및 벽체녹화공사</div>
+        <div class="choice">4. 자연하천 및 저수지공사</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>비탈면·옥상 및 벽체·자연하천 및 저수지 녹화공사는 환경생태복원 녹화공사에 속하지만, 분수공사는 경관(수경)시설공사로 분류되어 녹화공사에 해당하지 않는다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">41</span><p class="q-text">수목의 가식 장소로 적합한 곳은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 배수가 잘 되는 곳</div>
+        <div class="choice">2. 차량출입이 어려운 한적한 곳</div>
+        <div class="choice">3. 햇빛이 잘 안들고 점질 토양의 곳</div>
+        <div class="choice">4. 거센 바람이 불거나 흙 입자가 날려 잎을 덮어 보온이 가능한 곳</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>가식(임시 심기) 장소는 배수가 양호하고 통풍이 잘되며 작업·관리가 편한 곳이 적합하다. 점질토양·응달·강풍은 뿌리 손상과 건조 피해를 유발해 부적합하다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">42</span><p class="q-text">수목의 잎 조직 중 가스교환을 주로 하는 곳은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 책상조직</div>
+        <div class="choice">2. 엽록체</div>
+        <div class="choice">3. 표피</div>
+        <div class="choice correct">4. 기공</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>잎 표피의 기공(공변세포로 둘러싸인 구멍)을 통해 산소·이산화탄소·수증기가 드나드는 가스교환이 이뤄진다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">43</span><p class="q-text">곤충이 빛에 반응하여 일정한 방향으로 이동하려는 행동습성은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 주광성(phototaxis)</div>
+        <div class="choice">2. 주촉성(thigmotaxis)</div>
+        <div class="choice">3. 주화성(chemotaxis)</div>
+        <div class="choice">4. 주지성(geotaxis)</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>빛 자극에 반응해 이동하는 성질을 주광성(phototaxis)이라 하며, 나방류가 불빛에 모여드는 것이 대표적 예다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">44</span><p class="q-text">대추나무 빗자루병에 대한 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 마름무늬매미충에 의하여 매개 전염된다.</div>
+        <div class="choice correct">2. 각종 상처, 기공 등의 자연개구를 통하여 침입한다.</div>
+        <div class="choice">3. 잔가지와 황록색의 아주 작은 잎이 밀생하고, 꽃봉오리가 잎으로 변화된다.</div>
+        <div class="choice">4. 전염된 나무는 옥시테트라사이클린 항생제를 수간주입한다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>대추나무 빗자루병은 파이토플라스마가 매개충(마름무늬매미충)의 흡즙을 통해 체관부로 침입·전염되며, 상처나 기공 같은 자연개구를 통한 직접 침입은 이 병의 감염경로가 아니다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">45</span><p class="q-text">멀칭재료는 유기질, 광물질 및 합성재료로 분류할 수 있다. 유기질 멀칭재료에 해당하지 않는 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 볏짚</div>
+        <div class="choice correct">2. 마사</div>
+        <div class="choice">3. 우드 칩</div>
+        <div class="choice">4. 톱밥</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>볏짚·우드칩·톱밥은 식물성(유기질) 멀칭재료지만, 마사(마사토)는 화강암이 풍화된 광물질 재료라 유기질 멀칭재에 해당하지 않는다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">46</span><p class="q-text">1차 전염원이 아닌 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 균핵</div>
+        <div class="choice correct">2. 분생포자</div>
+        <div class="choice">3. 난포자</div>
+        <div class="choice">4. 균사속</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>균핵·난포자·균사속은 병원균이 월동 후 이듬해 최초 전염을 일으키는 1차 전염원인 반면, 분생포자는 생육기 중 반복 감염(2차 전염)을 일으키는 포자다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">47</span><p class="q-text">살충제에 해당되는 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 베노밀 수화제</div>
+        <div class="choice correct">2. 페니트로티온 유제</div>
+        <div class="choice">3. 글리포세이트암모늄 액제</div>
+        <div class="choice">4. 아시벤졸라-에스-메틸·만코제브 수화제</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>페니트로티온은 유기인계 살충제 성분이다. 베노밀과 아시벤졸라-에스-메틸·만코제브 합제는 살균제, 글리포세이트암모늄은 제초제다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">48</span><p class="q-text">여름용(남방계) 잔디라고 불리며, 따뜻하고 건조하거나 습윤한 지대에서 주로 재배되는데 하루 평균기온이 10℃ 이상이 되는 4월 초순부터 생육이 시작되어 6~8월의 25~35℃ 사이에서 가장 생육이 왕성한 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 켄터키블루그라스</div>
+        <div class="choice correct">2. 버뮤다그라스</div>
+        <div class="choice">3. 라이그라스</div>
+        <div class="choice">4. 벤트그라스</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>버뮤다그라스는 대표적 난지형(여름형) 잔디로 고온건조·다습에 강하고 여름철(25~35℃)에 생육이 가장 왕성하며, 저온·그늘에는 약해 가을 이후 휴면(황화)에 들어간다. 켄터키블루그라스·라이그라스·벤트그라스는 반대로 한지형(서늘한 계절형) 잔디다. (검색으로 생육적온 대조함)</p></div>
+    </article>
+
+    <article class="card flagged">
+      <div class="q-head">
+        <span class="q-num">49</span>
+        <p class="q-text">다음 설명에 적합한 조경 공사용 기계는?</p>
+        <span class="flag-chip">⚠ 확인 필요</span>
+      </div>
+      <div class="choices">
+        <div class="choice correct">1. 모터 그레이더</div>
+        <div class="choice">2. 차륜식 로더</div>
+        <div class="choice">3. 트럭 크레인</div>
+        <div class="choice">4. 진동 컴팩터</div>
+      </div>
+      <div class="explain">
+        <p class="explain-label">해설</p>
+        <p>노면을 정밀하게 깎고 고르는 정지작업용 기계는 모터 그레이더다. 차륜식 로더는 굴착·상차, 트럭크레인은 양중, 진동컴팩터는 다짐용 장비다. 사용자분이 올려주신 요약집에도 "그레이더(맷돌) → 운동장면을 평탄화 한다"고 정리돼 있어, 정지·평탄화 기능이라는 방향은 교차 확인됐다.</p>
+        <p class="caveat">⚠ 다만 원본 PDF의 "다음 설명" 부분 자체는 텍스트 추출 과정에서 누락돼, 시험에 실제 제시된 설명 문구는 확인하지 못했습니다.</p>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">50</span><p class="q-text">콘크리트용 혼화재료에 관한 설명으로 옳지 않은 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 포졸란은 시공연도를 좋게 하고 블리딩과 재료분리 현상을 저감시킨다.</div>
+        <div class="choice">2. 플라이애쉬와 실리카흄은 고강도 콘크리트 제조용으로 많이 사용된다.</div>
+        <div class="choice correct">3. 알루미늄 분말과 아연 분말은 방동제로 많이 사용되는 혼화제이다.</div>
+        <div class="choice">4. 염화칼슘과 규산소오다 등은 응결과 경화를 촉진하는 혼화제로 사용된다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>알루미늄 분말·아연 분말은 콘크리트 속에서 수소가스를 발생시켜 부풀리는 발포제(기포제)로 주로 쓰이며, 방동제(동결방지제)로 분류되지 않는다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">51</span><p class="q-text">콘크리트의 시공단계 순서가 바르게 연결된 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 운반 → 제조 → 부어넣기 → 다짐 → 표면마무리 → 양생</div>
+        <div class="choice">2. 운반 → 제조 → 부어넣기 → 양생 → 표면마무리 → 다짐</div>
+        <div class="choice">3. 제조 → 운반 → 부어넣기 → 다짐 → 양생 → 표면마무리</div>
+        <div class="choice correct">4. 제조 → 운반 → 부어넣기 → 다짐 → 표면마무리 → 양생</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>배합·비비기(제조) 후 현장으로 운반하고, 타설(부어넣기)·다짐(진동)으로 밀실하게 채운 뒤 표면을 마무리하고 마지막으로 양생하는 순서다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">52</span><p class="q-text">다음 중 경관석 놓기에 관한 설명으로 가장 부적합한 것은?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 돌과 돌 사이는 움직이지 않도록 시멘트로 굳힌다.</div>
+        <div class="choice">2. 돌 주위에는 회양목, 철쭉 등을 돌에 가까이 붙여 식재한다.</div>
+        <div class="choice">3. 시선이 집중하기 쉬운 곳, 시선을 유도해야 할 곳에 앉혀 놓는다.</div>
+        <div class="choice">4. 3, 5, 7 등의 홀수로 만들며, 돌 사이의 거리나 크기 등을 조정배치 한다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>경관석은 자연스러운 배치를 위해 서로 밀착시키되 인공적으로 시멘트로 굳히지 않는 것이 원칙이라, 이 지문이 부적합하다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">53</span><p class="q-text">축척 1/500 도면의 단위면적이 10m²인 것을 이용하여, 축척 1/1000 도면의 단위면적으로 환산하면 얼마인가?</p></div>
+      <div class="choices">
+        <div class="choice">1. 20m²</div>
+        <div class="choice correct">2. 40m²</div>
+        <div class="choice">3. 80m²</div>
+        <div class="choice">4. 120m²</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>도상 단위면적당 실제면적은 축척 분모의 제곱에 비례한다. 축척 분모가 500에서 1000으로 2배가 되면 단위면적은 2² = 4배가 되어 10m² × 4 = 40m²다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">54</span><p class="q-text">토공사(정지) 작업 시 일정한 장소에 흙을 쌓아 일정한 높이를 만드는 일을 무엇이라 하는가?</p></div>
+      <div class="choices">
+        <div class="choice">1. 객토</div>
+        <div class="choice">2. 절토</div>
+        <div class="choice correct">3. 성토</div>
+        <div class="choice">4. 경토</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>흙을 쌓아올려 지반을 높이는 작업을 성토라 한다. 절토는 깎아내는 것, 객토는 다른 흙을 넣는 것, 경토는 작토층(밭갈이흙)을 뜻한다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">55</span><p class="q-text">옥상녹화용 방수층 및 방근층 시공 시 "바탕체의 거동에 의한 방수층의 파손" 요인에 대한 해결방법으로 부적합한 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 거동 흡수 절연층의 구성</div>
+        <div class="choice correct">2. 방수층 위에 플라스틱계 배수판 설치</div>
+        <div class="choice">3. 합성고분자계, 금속계 또는 복합계 재료 사용</div>
+        <div class="choice">4. 콘크리트 등 바탕체가 온도 및 진동에 의한 거동 시 방수층 파손이 없을 것</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>배수판 설치는 방수층을 보호하고 배수를 돕는 조치이지, 바탕체 거동으로 인한 방수층 파손 자체를 막는 근본 대책은 아니다. 절연층 구성이나 거동에 강한 재료 사용이 직접적인 해법이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">56</span><p class="q-text">지표면이 높은 곳의 꼭대기 점을 연결한 선으로, 빗물이 이것을 경계로 좌우로 흐르게 되는 선을 무엇이라 하는가?</p></div>
+      <div class="choices">
+        <div class="choice correct">1. 능선</div>
+        <div class="choice">2. 계곡선</div>
+        <div class="choice">3. 경사 변환점</div>
+        <div class="choice">4. 방향 변환점</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>지표면 높은 곳들을 연결한 선으로 빗물이 이를 경계로 좌우로 갈라져 흐르는 선을 능선(분수선)이라 하며, 낮은 곳을 연결해 물이 모이는 선은 계곡선이다.</p></div>
+    </article>
+
+    <article class="card">
+      <div class="q-head"><span class="q-num">57</span><p class="q-text">수변의 디딤돌(징검돌) 놓기에 대한 설명으로 틀린 것은?</p></div>
+      <div class="choices">
+        <div class="choice">1. 보행에 적합하도록 지면과 수평으로 배치한다.</div>
+        <div class="choice">2. 징검돌의 상단은 수면보다 15㎝ 정도 높게 배치한다.</div>
+        <div class="choice">3. 디딤돌 및 징검돌의 장축은 진행방향에 직각이 되도록 배치한다.</div>
+        <div class="choice correct">4. 물 순환 및 생태적 환경을 조성하기 위하여 투수지역에서는 가벼운 디딤돌을 주로 활용한다.</div>
+      </div>
+      <div class="explain"><p class="explain-label">해설</p><p>디딤돌은 보행 안전을 위해 무겁고 안정된 돌을 써야 하며, 투수지역이라도 가벼운 돌을 쓰면 밟았을 때 흔들리거나 가라앉아 위험하다. 나머지(수평 배치, 수면보다 15cm 높게, 장축이 진행방향에 직각)는 조경설계기준과 일치하는 옳은 설명이다. (검색으로 15cm 수치 대조함)</p></div>
+    </article>
+
+    <article class="card flagged">
+      <div class="q-head">
+        <span class="q-num">58</span>
+        <p class="q-text">수경시설(연못)의 유지관리에 관한 내용으로 옳지 않은 것은?</p>
+        <span class="flag-chip">⚠ 확인 필요</span>
+      </div>
+      <div class="choices">
+        <div class="choice correct">1. 겨울철에는 물을 2/3 정도만 채워둔다.</div>
+        <div class="choice">2. 녹이 잘 스는 부분은 녹막이 칠을 수시로 해준다.</div>
+        <div class="choice">3. 수중식물 및 어류의 상태를 수시로 점검한다.</div>
+        <div class="choice">4. 물이 새는 곳이 있는지의 여부를 수시로 점검하여 조치한다.</div>
+      </div>
+      <div class="explain">
+        <p class="explain-label">해설</p>
+        <p>어류가 있는 연못은 겨울철에도 완전 결빙을 막을 정도의 수심은 유지해야 한다는 일반 원칙과, "2/3만 채운다"는 구체적 수치가 어떻게 연결되는지는 명확한 근거를 찾지 못했습니다.</p>
+        <p class="caveat">⚠ 검색을 했지만 "2/3" 수치의 정확한 출처(어떤 표준·시방서 문구인지)를 찾지 못했습니다. 정답 자체(①)는 questions.json 기준이니 맞겠지만, 왜 틀렸는지에 대한 제 설명은 추정입니다 — 다른 3문항과 별개로 이것도 확인해 주시면 좋겠습니다.</p>
+      </div>
+    </article>
+  </section>
+
+  <footer class="page">
+    58문항 중 20 · 49 · 58번, 3문항은 근거가 약해 노란 표시로 남겨뒀습니다. 나머지 55문항도 전부 100% 확신은 아니니, 특히 눈에 띄는 오류가 있으면 알려주세요 — 그 피드백으로 정확도를 가늠해서 전체 회차로 넓힐지 결정하면 됩니다.
+  </footer>
+</div>

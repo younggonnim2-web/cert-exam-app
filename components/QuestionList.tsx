@@ -165,6 +165,12 @@ export function QuestionList({
                   )
                 })}
               </div>
+              {isAnswered && q.explanation && (
+                <div className="mt-3 rounded-md border-l-4 border-blue-400 bg-blue-50 p-3">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">해설</p>
+                  <p className="text-sm text-ink">{q.explanation}</p>
+                </div>
+              )}
             </li>
           )
         })}

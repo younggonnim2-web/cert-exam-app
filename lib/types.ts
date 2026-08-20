@@ -7,6 +7,7 @@ export interface Question {
   choices: [string, string, string, string]
   answer: 1 | 2 | 3 | 4 // 1-indexed 정답 번호
   subject: string // 과목명, 예: "작물재배"
+  explanation?: string // 정답 해설 — 일부 회차만 파일럿으로 채워져 있어 대부분 없음
 }
 
 export interface ExamMeta {
