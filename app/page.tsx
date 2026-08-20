@@ -6,12 +6,7 @@ export default function HomePage() {
   const certs = getCerts()
   return (
     <main className="mx-auto max-w-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">자격증 선택</h1>
-        <Link href="/history" className="text-sm text-muted underline">
-          학습 기록
-        </Link>
-      </div>
+      <h1 className="text-2xl font-semibold mb-6">자격증 선택</h1>
       {certs.length === 0 ? (
         <p className="text-gray-500 text-sm">
           등록된 자격증이 없습니다. data/exam-questions/ 를 확인해주세요.
