@@ -73,6 +73,23 @@ export function getWrongHistory(): WrongAnswerEntry[] {
   return loadRecords(WRONG_HISTORY_KEY, wrongHistorySchema)
 }
 
+// 순수 함수라 이미 불러온 이력 배열(getWrongHistory()의 결과)을 넘겨받는다 — 상세
+// 페이지가 화면에 뜬 문항 개수만큼 매번 localStorage를 다시 읽지 않도록 하기 위함.
+// 회차가 다르면 같은 문항 번호라도 실제로는 완전히 다른 문제이므로 회차까지 일치할
+// 때만 세고, 모의고사/과목별 연습도 서로 다른 학습 맥락이라 모드까지 일치해야 센다.
+export function countWrongOccurrences(
+  entries: WrongAnswerEntry[],
+  cert: string,
+  round: string,
+  mode: WrongAnswerEntry['mode'],
+  questionNumber: number
+): number {
+  return entries.filter(
+    (e) =>
+      e.cert === cert && e.round === round && e.mode === mode && e.questionNumber === questionNumber
+  ).length
+}
+
 function examAttemptDedupKey(entry: ExamAttemptSummary): string {
   return `${entry.cert}:${entry.round}:${entry.attemptDate}`
 }

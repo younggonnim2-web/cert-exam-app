@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { getWrongHistory, getExamAttempts } from '@/lib/examHistory'
+import { getWrongHistory, getExamAttempts, countWrongOccurrences } from '@/lib/examHistory'
 import { safeDecodeSegment } from '@/lib/safeDecodeSegment'
 import { WrongQuestionReview } from '@/components/WrongQuestionReview'
 import type { Attempt, ExamAttemptSummary, Question, WrongAnswerEntry } from '@/lib/types'
@@ -28,6 +28,7 @@ export default function AttemptDetailPage() {
   const [status, setStatus] = useState<PageStatus>('loading')
   const [questions, setQuestions] = useState<Question[]>([])
   const [wrongEntries, setWrongEntries] = useState<WrongAnswerEntry[]>([])
+  const [allWrongEntries, setAllWrongEntries] = useState<WrongAnswerEntry[]>([])
   const [attempt, setAttempt] = useState<ExamAttemptSummary | null>(null)
 
   useEffect(() => {
@@ -37,7 +38,12 @@ export default function AttemptDetailPage() {
     }
 
     // 오답/응시 요약은 localStorage에서 즉시 읽고, 문항 지문/보기만 API에서 가져온다.
-    const entries = getWrongHistory().filter(
+    // 전체 이력(allWrongEntries)은 "이 문항을 지금까지 총 몇 번 틀렸는지" 계산에
+    // 쓴다 — 이 날짜 하루로 필터링하면 항상 1이 되어 버려서 날짜 필터링 전 원본이
+    // 따로 필요하다.
+    const all = getWrongHistory()
+    setAllWrongEntries(all)
+    const entries = all.filter(
       (e) => e.cert === cert && e.round === round && e.attemptDate === date && e.mode === mode
     )
     setWrongEntries(entries)
@@ -113,9 +119,20 @@ export default function AttemptDetailPage() {
             .map((entry) => {
               const question = questions.find((q) => q.number === entry.questionNumber)
               if (!question) return null
+              const timesWrong = countWrongOccurrences(
+                allWrongEntries,
+                cert,
+                round,
+                mode,
+                entry.questionNumber
+              )
               return (
                 <div key={entry.questionNumber} className="bg-surface-card rounded-lg p-3">
-                  <WrongQuestionReview question={question} chosenAnswer={entry.chosenAnswer} />
+                  <WrongQuestionReview
+                    question={question}
+                    chosenAnswer={entry.chosenAnswer}
+                    timesWrong={timesWrong}
+                  />
                 </div>
               )
             })}

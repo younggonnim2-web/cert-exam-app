@@ -7,14 +7,23 @@ import type { Question } from '@/lib/types'
 export function WrongQuestionReview({
   question,
   chosenAnswer,
+  timesWrong,
 }: {
   question: Question
   chosenAnswer: 1 | 2 | 3 | 4
+  // 같은 자격증+회차+모드에서 이 문항을 틀린 적이 있는 서로 다른 날짜 수(오늘 포함).
+  // 1이면(처음이자 유일하게 틀림) 굳이 표시할 정보가 아니므로 생략한다.
+  timesWrong?: number
 }) {
   return (
     <div>
       <p className="font-medium mb-2 text-ink">
         {question.number}. {question.text}
+        {timesWrong !== undefined && timesWrong > 1 && (
+          <span className="ml-2 inline-block rounded-full bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 align-middle">
+            총 {timesWrong}번 틀림
+          </span>
+        )}
       </p>
       <div className="space-y-1">
         {question.choices.map((choice, i) => {
