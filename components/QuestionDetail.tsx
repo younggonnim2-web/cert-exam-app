@@ -17,9 +17,18 @@ export function QuestionDetail({
       <p className="font-semibold mb-3 text-ink">
         {question.number}. {question.text}
       </p>
+      {question.stemImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={question.stemImage}
+          alt={`${question.number}번 문제 그림`}
+          className="mb-3 max-w-full rounded-md border border-hairline"
+        />
+      )}
       <div className="space-y-2">
         {question.choices.map((choice, i) => {
           const choiceNum = (i + 1) as 1 | 2 | 3 | 4
+          const choiceImage = question.choiceImages?.[i]
           return (
             <button
               key={i}
@@ -33,6 +42,14 @@ export function QuestionDetail({
               }`}
             >
               {choiceNum}. {choice}
+              {choiceImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={choiceImage}
+                  alt={`${choiceNum}번 보기 그림`}
+                  className="mt-1 max-h-32 rounded border border-hairline"
+                />
+              )}
             </button>
           )
         })}
